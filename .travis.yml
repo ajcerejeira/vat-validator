@@ -12,6 +12,7 @@ script:
 
   - python setup.py test
   - coverage run --source=vatval setup.py test
+  - coveralls
 deploy:
   provider: pypi
   server: https://test.pypi.org/legacy/

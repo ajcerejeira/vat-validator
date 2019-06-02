@@ -9,8 +9,10 @@ VAT validation library
 
 .. image:: https://readthedocs.org/projects/vatval/badge/?version=latest
     :target: https://vatval.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Statu
+    :alt: Documentation Status
 
+.. image:: https://coveralls.io/repos/github/ajcerejeira/vatval/badge.svg?branch=master
+    :target: https://coveralls.io/github/ajcerejeira/vatval?branch=master
 
 Getting started
 ===============
