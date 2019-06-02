@@ -18,4 +18,4 @@ deploy:
   user: $PYPI_USERNAME
   password: $PYPI_PASSWORD
   on:
-    master
+    tags: true
