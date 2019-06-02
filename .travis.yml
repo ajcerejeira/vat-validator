@@ -3,7 +3,7 @@ language: python
 python:
   - "3.7"
 install:
-  - pip install setuptools wheel flake8 mypy sphinx sphinx_rtd_theme
+  - pip install -r requirements/dev.txt
 script:
   # Run linters
   - mypy -m vatval
