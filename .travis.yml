@@ -1,0 +1,12 @@
+dist: xenial
+language: python
+python:
+  - "3.7"
+install:
+  - pip install flake8 mypy sphinx 
+script:
+  # Run linters
+  - mypy -m autofmu --ignore-missing-imports
+  - flake8 autofmu tests
+  # Run tests
+  - python -m unittest
