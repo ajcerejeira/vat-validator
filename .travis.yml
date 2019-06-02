@@ -13,7 +13,7 @@ script:
   - coverage run --source=vatval setup.py test
 deploy:
   provider: pypi
-  server: https://test.pypi.org/
+  server: https://test.pypi.org/simple/
   user: $PYPI_USERNAME
   password: $PYPI_PASSWORD
   on:
