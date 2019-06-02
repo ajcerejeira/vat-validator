@@ -3,10 +3,15 @@ language: python
 python:
   - "3.7"
 install:
-  - pip install flake8 mypy sphinx 
+  - pip install flake8 mypy sphinx sphinx_rtd_theme
 script:
   # Run linters
   - mypy -m vatval
   - flake8 vatval tests
   # Run tests
   - python -m unittest
+after_success:
+  # Create pip package
+  - python setup.py sdist bdist_wheel
+  # Install
+  - python setup.py install
