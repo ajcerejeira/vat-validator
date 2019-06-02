@@ -7,6 +7,10 @@ VAT validation library
 .. image:: https://travis-ci.com/ajcerejeira/vatval.svg?branch=master
     :target: https://travis-ci.com/ajcerejeira/vatval
 
+.. image:: https://readthedocs.org/projects/vatval/badge/?version=latest
+    :target: https://vatval.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Statu
+
 
 Getting started
 ===============
