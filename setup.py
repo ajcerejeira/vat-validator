@@ -16,6 +16,7 @@ setuptools.setup(
     url="https://github.com/ajcerejeira/vatval",
     license='MIT License',
     packages=setuptools.find_packages(),
+    test_suite='tests',
     classifiers=[
         "Development Status :: 1 - Planning",
         "Programming Language :: Python :: 3",

@@ -9,7 +9,8 @@ script:
   - mypy -m vatval
   - flake8 vatval tests
   # Run tests
-  - python -m unittest
+  - python setup.py test
+  - coverage run --source=vatval setup.py test
 deploy:
   provider: pypi
   server: https://test.pypi.org/
