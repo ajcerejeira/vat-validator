@@ -10,11 +10,6 @@ script:
   - flake8 vatval tests
   # Run tests
   - python -m unittest
-after_success:
-  # Create pip package
-  - python setup.py sdist bdist_wheel
-  # Install
-  - python setup.py install
 deploy:
   provider: pypi
   server: https://test.pypi.org/
