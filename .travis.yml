@@ -6,7 +6,7 @@ install:
   - pip install flake8 mypy sphinx 
 script:
   # Run linters
-  - mypy -m autofmu --ignore-missing-imports
-  - flake8 autofmu tests
+  - mypy -m vatval
+  - flake8 vatval tests
   # Run tests
   - python -m unittest
