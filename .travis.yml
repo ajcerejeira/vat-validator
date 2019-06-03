@@ -6,12 +6,12 @@ install:
   - pip install -r requirements/dev.txt
 script:
   # Run linters
-  - mypy -m vatval
-  - flake8 vatval tests
+  - mypy -m vat_validator
+  - flake8 vat_validator tests
   # Run tests
 
   - python setup.py test
-  - coverage run --source=vatval setup.py test
+  - coverage run --source=vat_validator setup.py test
   - coveralls
 deploy:
   provider: pypi

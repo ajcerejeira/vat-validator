@@ -1,7 +1,7 @@
 from pathlib import Path
 import unittest
 
-from vatval.utils import validate_vat
+from vat_validator.utils import validate_vat
 
 
 class ValidateVATTestCase(unittest.TestCase):

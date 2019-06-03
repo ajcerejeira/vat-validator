@@ -2,15 +2,15 @@
 API reference
 =============
 
-:mod:`vatval.utils`
-======================
+:mod:`vat_validator.utils`
+==========================
 
-.. automodule:: vatval.utils
+.. automodule:: vat_validator.utils
    :members:
 
 
-:mod:`vatval.rules`
-======================
+:mod:`vat_validator.rules`
+==========================
 
-.. automodule:: vatval.rules
+.. automodule:: vat_validator.rules
    :members:

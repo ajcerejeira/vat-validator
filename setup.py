@@ -6,7 +6,7 @@ with open("README.rst", "r") as fh:
 
 
 setuptools.setup(
-    name="vatval",
+    name="vat-validator",
     version="0.0.1",
     author="Afonso Silva",
     author_email="ajcerejeira@gmail.com",

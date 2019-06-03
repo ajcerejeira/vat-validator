@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'vatval'
+project = 'vat-validator'
 copyright = '2019, Afonso Silva'
 author = 'Afonso Silva'
 
