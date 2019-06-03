@@ -11,8 +11,9 @@ Pythonic VAT validation library
     :target: https://vatval.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://coveralls.io/repos/github/ajcerejeira/vatval/badge.svg?branch=master
-    :target: https://coveralls.io/github/ajcerejeira/vatval?branch=master
+.. image:: https://coveralls.io/repos/github/ajcerejeira/vat-validator/badge.svg?branch=master
+    :target: https://coveralls.io/github/ajcerejeira/vat-validator?branch=master
+
 
 Getting started
 ===============
