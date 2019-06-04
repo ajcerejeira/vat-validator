@@ -262,9 +262,17 @@ def finland_vat_rule(vat: str) -> bool:
 
 
 def france_vat_rule(vat: str) -> bool:
-    # TODO
-    match = re.match(r'^(FR)?\w{2}\d{9}', vat)
-    return bool(match)
+    """Validates a VAT number against french VAT format specification.
+    In France is also named "Numéro de TVA intracommunautaire" (TVA).
+    The number must contain 2 control characters followed by 9 digits.
+
+    :param vat: VAT number to validate.
+    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
+    """
+    match = re.match(r'^(FR?)?(\d{2})(\d{9})', vat)
+    if not match:
+        return False
+    return int(match.group(2)) == (int(match.group(3)) * 100 + 12) % 97
 
 
 def germany_vat_rule(vat: str) -> bool:
