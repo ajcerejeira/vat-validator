@@ -131,9 +131,22 @@ def croatia_vat_rule(vat: str) -> bool:
 
 
 def cyprus_vat_rule(vat: str) -> bool:
-    # TODO
-    match = re.match(r'^(CY)?(\d{9})L$', vat)
-    return bool(match)
+    """Validates a VAT number against cyprus VAT format specification.
+    In Cyprus is also named "Arithmós Engraphḗs phi. pi. a." (ΦΠΑ).
+    The number must contain 8 digits followed by a letter that is used to check
+    the number.
+
+    :param vat: VAT number to validate.
+    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
+    """
+    match = re.match(r'^(CY)?(\d{8})([A-Z])$', vat)
+    if not match:
+        return False
+    c1, c2, c3, c4, c5, c6, c7, c8 = map(int, match.group(2))
+    c9 = match.group(3)
+    k = [1, 0, 5, 7, 9, 13, 15, 17, 19, 21]
+    r = (c2 + c4 + c6 + c8 + k[c1] + k[c3] + k[c5] + k[c7]) % 26
+    return chr(65 + r) == c9
 
 
 def czech_republic_vat_rule(vat: str) -> bool:
