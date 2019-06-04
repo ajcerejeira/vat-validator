@@ -632,9 +632,18 @@ def slovakia_vat_rule(vat: str) -> bool:
 
 
 def sweden_vat_rule(vat: str) -> bool:
-    # TODO
-    match = re.match(r'^(SE)?\d{12}$', vat)
-    return bool(match)
+    match = re.match(r'^(SE)?(\d{12})$', vat)
+    if not match:
+        return False
+    c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12 = map(int,
+                                                            match.group(2))
+    s1 = int(c1 / 5) + (c1 * 2) % 10
+    s3 = int(c3 / 5) + (c3 * 2) % 10
+    s5 = int(c5 / 5) + (c5 * 2) % 10
+    s7 = int(c7 / 5) + (c7 * 2) % 10
+    s9 = int(c9 / 5) + (c9 * 2) % 10
+    r = s1 + s3 + s5 + s7 + s9
+    return c10 == (10 - (r + c2 + c4 + c6 + c8) % 10) % 10
 
 
 def united_kingdom_vat_rule(vat: str) -> bool:
