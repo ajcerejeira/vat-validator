@@ -2,7 +2,13 @@
 This module contains a set of functions that validate a VAT number according to
 a country VAT format rules.
 
-.. seealso:: https://en.wikipedia.org/wiki/VAT_identification_number
+.. seealso::
+
+   The list of VAT validation algorithms are published here:
+   https://ec.europa.eu/taxation_customs/tin/
+
+   This wikipedia page contains a great overview of the different formats:
+   https://en.wikipedia.org/wiki/VAT_identification_number
 """
 from math import floor, ceil
 from typing import Callable, Dict
@@ -51,8 +57,55 @@ def belgium_vat_rule(vat: str) -> bool:
 
 
 def bulgaria_vat_rule(vat: str) -> bool:
-    match = re.match(r'^(BG)?(\d{9,10})$', vat)
-    return bool(match)
+    """Validates a VAT number against bulgarian VAT format specification.
+    In Bulgary is also named "Identifikacionen nomer po DDS" (ДДС номер	).
+    The number must contain 9 or 10 digits. It assumes one of four formats:
+    "legal entities", "physical persons", "foreigners" and "miscellaneous".
+
+    :param vat: VAT number to validate.
+    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
+    """
+    match = re.match(r'^(BG)?(\d{9})(\d?)$', vat)
+    if not match:
+        return False
+    c1, c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
+    c10 = int(match.group(3)) if match.group(3) else None
+
+    def legal_entities_style() -> bool:
+        if c10 is not None:
+            return False
+        r1 = ((1 * c1 + 2 * c2 + 3 * c3 + 4 * c4 + 5 * c5 + 6 * c6 + 7 * c7 +
+               8 * c8) % 11)
+        r2 = ((3 * c1 + 4 * c2 + 5 * c3 + 6 * c4 + 7 * c5 + 8 * c6 + 9 * c7 +
+               10 * c8) % 11)
+        return ((c9 == r1) or (r1 == 10 and r2 == 10 and c9 == 0) or
+                (r1 == 10 and r2 != 10 and c9 == r2))
+
+    def physical_persons_style() -> bool:
+        if c10 is None:
+            return False
+        r = (2 * c1 + 4 * c2 + 8 * c3 + 5 * c4 + 10 * c5 + 9 * c6 + 7 * c7 +
+             3 * c8 + 6 * c9) % 11
+        return (r == 10 and c10 == 0) or (c10 == r)
+
+    def foreigners_style() -> bool:
+        if c10 is None:
+            return False
+        r = (21 * c1 + 19 * c2 + 17 * c3 + 13 * c4 + 11 * c5 + 9 * c6 +
+             7 * c7 + 3 * c8 + 1 * c9) % 10
+        return c10 == r
+
+    def other_style() -> bool:
+        if c10 is None:
+            return False
+        r = 11 - (4 * c1 + 3 * c2 + 2 * c3 + 7 * c4 + 6 * c5 + 5 * c6 +
+                  4 * c7 + 3 * c8 + 2 * c9) % 11
+        return r != 10 and ((r == 11 and r == 0) or (c10 == r))
+
+    return (legal_entities_style() or
+            physical_persons_style() or
+            foreigners_style() or
+            other_style())
 
 
 def croatia_vat_rule(vat: str) -> bool:
