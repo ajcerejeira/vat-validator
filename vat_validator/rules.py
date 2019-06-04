@@ -150,9 +150,59 @@ def cyprus_vat_rule(vat: str) -> bool:
 
 
 def czech_republic_vat_rule(vat: str) -> bool:
-    # TODO
-    match = re.match(r'^(CZ)?(\d{8,10})$', vat)
-    return bool(match)
+    """Validates a VAT number against czech republic VAT format specification.
+    In Czech Republic is also named "Daňové identifikační číslo" (DIČ).
+    The number must contain 8 to 10 digits depending if it is a legar entity or
+    individual.
+
+    :param vat: VAT number to validate.
+    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
+    """
+    match = re.match(r'^(CZ)?(\d{8})(\d?)(\d?)$', vat)
+    if not match:
+        return False
+    c1, c2, c3, c4, c5, c6, c7, c8 = map(int, match.group(2))
+    c9 = int(match.group(3)) if match.group(3) else None
+    c10 = int(match.group(4)) if match.group(4) else None
+
+    def legal_entities_style():
+        if c9 is not None or c10 is not None:
+            return False
+        a1 = 8 * c1 + 7 * c2 + 6 * c3 + 5 * c4 + 4 * c5 + 3 * c6 + 2 * c7
+        a2 = a1 + 11 if a1 % 11 == 0 else ceil(a1 / 11) * 11
+        return c8 == (a2 - a1) % 10
+
+    def individuals_style_1():
+        if c9 is None or c10 is not None:
+            return False
+        year = int(''.join(map(str, [c1, c2])))
+        month = int(''.join(map(str, [c3, c4])))
+        day = int(''.join(map(str, [c5, c6])))
+
+        return (year in range(0, 54) and
+                (month in range(1, 13) or month in range(51, 63)) and
+                day in range(1, 32))
+
+    def individuals_style_2():
+        if c9 is None or c10 is not None:
+            return False
+        a1 = 8 * c2 + 7 * c3 + 6 * c4 + 5 * c5 + 4 * c6 + 3 * c7 + 2 * c8
+        a2 = a1 + 11 if a1 % 11 == 0 else ceil(a1 / 11) * 11
+        return c9 == [0, 8, 7, 6, 5, 4, 3, 2, 1, 0, 9, 8][a2 - a1]
+
+    def individuals_style_3():
+        if c9 is None or c10 is None:
+            return False
+        r1 = int(''.join(map(str, [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10])))
+        r2 = (int(''.join(map(str, [c1, c2]))) +
+              int(''.join(map(str, [c3, c4]))) +
+              int(''.join(map(str, [c5, c6]))) +
+              int(''.join(map(str, [c7, c8]))) +
+              int(''.join(map(str, [c9, c10]))))
+        return r1 % 11 == 0 and r2 % 11 == 0
+
+    return (legal_entities_style() or individuals_style_1() or
+            individuals_style_2() or individuals_style_3())
 
 
 def denmark_vat_rule(vat: str) -> bool:
