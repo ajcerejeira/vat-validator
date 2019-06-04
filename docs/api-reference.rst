@@ -9,8 +9,8 @@ API reference
    :members:
 
 
-:mod:`vat_validator.rules`
-==========================
+:mod:`vat_validator.countries`
+==============================
 
-.. automodule:: vat_validator.rules
+.. automodule:: vat_validator.countries
    :members:

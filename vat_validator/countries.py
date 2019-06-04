@@ -1,6 +1,28 @@
 """
-This module contains a set of functions that validate a VAT number according to
-a country VAT format rules.
+This module contains a set of functions to validate a VAT number according to
+a country VAT format rules. Besides the general regex match, the validation
+functions perform some country specific calculations on the digits using
+algorithms such as MOD 11 or Lunh's algorithm.
+
+All of these functions are in the format ``validate_vat_XX`` where XX is the
+IS0 3166 country code. They receive a string representing a VAT number in that
+country format and return ``True`` or ``False`` whether that code is valid or
+not.
+
+The validation process
+
+**Usage**:
+
+>>> validate_vat_pt('PT980405319')
+True
+>>> validate_vat_pt('PT-980 405 319')
+True
+>>> validate_vat_pt('80405319')
+False
+
+Each function is responsible to sanitize the input (remove preciding country
+code, spaces, punctuation, *etc...*)
+
 
 .. seealso::
 
@@ -574,13 +596,17 @@ def validate_vat_pt(vat: str) -> bool:
 
     .. seealso:: https://pt.wikipedia.org/wiki/Número_de_identificação_fiscal
     """
-    match = re.match(r'^(PT)?(\d{9})$', vat)
-    if not match:
+    def calc_check_digit(code: str) -> str:
+        s = sum((9 - index) * int(digit)
+                for index, digit in enumerate(code[:-1]))
+        return str((11 - s) % 11 % 10)
+
+    sanitized_vat = re.sub(r'(^PT)|\s*|\W*', '', vat, flags=re.I)
+    if not sanitized_vat.isdigit():
         return False
-    c1, c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
-    r = 11 - (9 * c1 + 8 * c2 + 7 * c3 + 6 * c4 + 5 * c5 + 4 * c6 + 3 * c7 +
-              2 * c8) % 11
-    return ((r == 10 or r == 11) and c9 == 0) or (c9 == r)
+    if len(sanitized_vat) != 9:
+        return False
+    return calc_check_digit(sanitized_vat) == sanitized_vat[-1]
 
 
 def validate_vat_ro(vat: str) -> bool:

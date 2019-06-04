@@ -23,5 +23,23 @@ Getting started
 Instalation
 -----------
 
+``vat-validator`` is distributed as standard pip library, and can be installed
+by running:
+
+::
+
+    pip install vat-validator
+
+To install the latest development version directly from git:
+
+::
+
+    pip install git+git://github.com/ajcerejeira/vat-validator.git
+
+
 Usage
 -----
+
+>>> from vat_validator import validate_vat
+>>> validate_vat('PT', 'PT-980 405 319')
+True
