@@ -1,5 +1,5 @@
 from typing import List
-from .rules import EU_RULES
+from .countries import EU_RULES
 
 
 def validate_vat(country_code: str, vat: str) -> bool:

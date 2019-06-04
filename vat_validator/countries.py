@@ -16,7 +16,7 @@ from typing import Callable, Dict
 import re
 
 
-def austria_vat_rule(vat: str) -> bool:
+def validate_vat_au(vat: str) -> bool:
     """Validates a VAT number against austrian VAT format specification.
     In Austria is also named "Umsatzsteuer-Identifikationsnummer" (UID).
     The number must contain the letter 'U' followed by 8 digits and the last
@@ -37,7 +37,7 @@ def austria_vat_rule(vat: str) -> bool:
     return check_digit == c9
 
 
-def belgium_vat_rule(vat: str) -> bool:
+def validate_vat_be(vat: str) -> bool:
     """Validates a VAT number against belgian VAT format specification.
     In Belgium is also named "BTW identificatienummer" (BTW-nr).
     The number must contain 10 digits starting with 0 or 1. The old numbering
@@ -57,7 +57,7 @@ def belgium_vat_rule(vat: str) -> bool:
     return check_digits == int(number[8:10])
 
 
-def bulgaria_vat_rule(vat: str) -> bool:
+def validate_vat_bg(vat: str) -> bool:
     """Validates a VAT number against bulgarian VAT format specification.
     In Bulgary is also named "Identifikacionen nomer po DDS" (ДДС номер	).
     The number must contain 9 or 10 digits. It assumes one of four formats:
@@ -109,29 +109,7 @@ def bulgaria_vat_rule(vat: str) -> bool:
             other_style())
 
 
-def croatia_vat_rule(vat: str) -> bool:
-    """Validates a VAT number against croatian VAT format specification.
-    In Croatia is also named "PDV Id. Broj OIB" (PDV-ID; OIB).
-    The number must contain 11 digits and the last digit is the check digit.
-    It uses MOD 11-10 algorithm to calculate the check digit.
-
-    :param vat: VAT number to validate.
-    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
-    """
-    match = re.match(r'^(HR)?(\d{11})$', vat)
-    if not match:
-        return False
-    *digits, last_digit = map(int, match.group(2))
-    product = 10
-    for digit in digits:
-        soma = (digit + product) % 10
-        if soma == 0:
-            soma = 10
-        product = (2 * soma) % 11
-    return (product + last_digit) % 10 == 1
-
-
-def cyprus_vat_rule(vat: str) -> bool:
+def validate_vat_cy(vat: str) -> bool:
     """Validates a VAT number against cyprus VAT format specification.
     In Cyprus is also named "Arithmós Engraphḗs phi. pi. a." (ΦΠΑ).
     The number must contain 8 digits followed by a letter that is used to check
@@ -150,7 +128,7 @@ def cyprus_vat_rule(vat: str) -> bool:
     return chr(65 + r) == c9
 
 
-def czech_republic_vat_rule(vat: str) -> bool:
+def validate_vat_cz(vat: str) -> bool:
     """Validates a VAT number against czech republic VAT format specification.
     In Czech Republic is also named "Daňové identifikační číslo" (DIČ).
     The number must contain 8 to 10 digits depending if it is a legar entity or
@@ -206,7 +184,25 @@ def czech_republic_vat_rule(vat: str) -> bool:
             individuals_style_2() or individuals_style_3())
 
 
-def denmark_vat_rule(vat: str) -> bool:
+def validate_vat_de(vat: str) -> bool:
+    """Validates a VAT number against german VAT format specification.
+    In Germany is also named "Umsatzsteuer-Identifikationsnummer" (USt-IdNr).
+    The number must contain 9 digits and the first one cannot be 0.
+
+    :param vat: VAT number to validate.
+    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
+    """
+    match = re.match(r'^(DE)?(\d{9})$', vat)
+    if not match:
+        return False
+    *c1_c8, c9 = map(int, match.group(2))
+    p = reduce(lambda x, c: ((2 * (10 if (c + x) % 10 == 0 else (c + x) % 10))
+                             % 11), c1_c8, 10)
+    r = 11 - p
+    return (c1_c8[0] > 0) and ((r == 10 and c9 == 0) or (c9 == r))
+
+
+def validate_vat_dk(vat: str) -> bool:
     """Validates a VAT number against dannish VAT format specification.
     In Denmark is also named "Momsregistreringsnummer" (CVR).
     The number must contain 8 digits and the last digit is the check digit.
@@ -225,7 +221,7 @@ def denmark_vat_rule(vat: str) -> bool:
     return r % 11 == 0
 
 
-def estonia_vat_rule(vat: str) -> bool:
+def validate_vat_ee(vat: str) -> bool:
     """Validates a VAT number against estoniaon VAT format specification.
     In Estonia is also named "Käibemaksukohustuslase number" (KMKR).
     The number must contain 9 digits.
@@ -241,7 +237,32 @@ def estonia_vat_rule(vat: str) -> bool:
     return c9 == 10 * ceil(r / 10) - r
 
 
-def finland_vat_rule(vat: str) -> bool:
+def validate_vat_el(vat: str) -> bool:
+    """Validates a VAT number against greece VAT format specification.
+    In Greece is also named "Arithmós Forologikou Mētrṓou" (ΑΦΜ).
+    The number must contain 9 digits and the last digit is the check digit.
+    It uses MOD 11 algorithm to calculate the check digit.
+
+    :param vat: VAT number to validate.
+    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
+    """
+    match = re.match(r'^(EL|GR)?(\d{9})$', vat)
+    if not match:
+        return False
+    c1, c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
+    r = (256 * c1 + 128 * c2 + 64 * c3 + 32 * c4 + 16 * c5 + 8 * c6 + 4 * c7 +
+         2 * c8) % 11
+    return c9 == ((r % 11) % 10)
+
+
+def validate_vat_es(vat: str) -> bool:
+    match = re.match(r'^(ES)?(\w)(\d{7})(\w)$', vat)
+    if not match:
+        return False
+    return bool(match)
+
+
+def validate_vat_fi(vat: str) -> bool:
     """Validates a VAT number against finnish VAT format specification.
     In Finland is also named "Arvonlisäveronumero" (AVL nro).
     The number must contain 8 digits and the last digit is the check digit.
@@ -261,7 +282,7 @@ def finland_vat_rule(vat: str) -> bool:
     return (r != 10) and ((r == 11 and c8 == 0) or (r == c8))
 
 
-def france_vat_rule(vat: str) -> bool:
+def validate_vat_fr(vat: str) -> bool:
     """Validates a VAT number against french VAT format specification.
     In France is also named "Numéro de TVA intracommunautaire" (TVA).
     The number must contain 2 control characters followed by 9 digits.
@@ -275,43 +296,35 @@ def france_vat_rule(vat: str) -> bool:
     return int(match.group(2)) == (int(match.group(3)) * 100 + 12) % 97
 
 
-def germany_vat_rule(vat: str) -> bool:
-    """Validates a VAT number against german VAT format specification.
-    In Germany is also named "Umsatzsteuer-Identifikationsnummer" (USt-IdNr).
-    The number must contain 9 digits and the first one cannot be 0.
+def validate_vat_gb(vat: str) -> bool:
+    # TODO
+    match = re.match(r'^(GB)?(\d{9}(\d{3})?|[A-Z]{2}\d{3})$', vat)
+    return bool(match)
+
+
+def validate_vat_hr(vat: str) -> bool:
+    """Validates a VAT number against croatian VAT format specification.
+    In Croatia is also named "PDV Id. Broj OIB" (PDV-ID; OIB).
+    The number must contain 11 digits and the last digit is the check digit.
+    It uses MOD 11-10 algorithm to calculate the check digit.
 
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(DE)?(\d{9})$', vat)
+    match = re.match(r'^(HR)?(\d{11})$', vat)
     if not match:
         return False
-    *c1_c8, c9 = map(int, match.group(2))
-    p = reduce(lambda x, c: ((2 * (10 if (c + x) % 10 == 0 else (c + x) % 10))
-                             % 11), c1_c8, 10)
-    r = 11 - p
-    return (c1_c8[0] > 0) and ((r == 10 and c9 == 0) or (c9 == r))
+    *digits, last_digit = map(int, match.group(2))
+    product = 10
+    for digit in digits:
+        soma = (digit + product) % 10
+        if soma == 0:
+            soma = 10
+        product = (2 * soma) % 11
+    return (product + last_digit) % 10 == 1
 
 
-def greece_vat_rule(vat: str) -> bool:
-    """Validates a VAT number against greece VAT format specification.
-    In Greece is also named "Arithmós Forologikou Mētrṓou" (ΑΦΜ).
-    The number must contain 9 digits and the last digit is the check digit.
-    It uses MOD 11 algorithm to calculate the check digit.
-
-    :param vat: VAT number to validate.
-    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
-    """
-    match = re.match(r'^(EL|GR)?(\d{9})$', vat)
-    if not match:
-        return False
-    c1, c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
-    r = (256 * c1 + 128 * c2 + 64 * c3 + 32 * c4 + 16 * c5 + 8 * c6 + 4 * c7 +
-         2 * c8) % 11
-    return c9 == ((r % 11) % 10)
-
-
-def hungary_vat_rule(vat: str) -> bool:
+def validate_vat_hu(vat: str) -> bool:
     """Validates a VAT number against hungarian VAT format specification.
     In Hungary is also named "Közösségi adószám" (ΑNUM).
     The number must contain 8 digits and the last digit is the check digit.
@@ -327,7 +340,7 @@ def hungary_vat_rule(vat: str) -> bool:
     return ((r % 10 == 0) and (c8 == 0)) or (10 - (r % 10) == c8)
 
 
-def ireland_vat_rule(vat: str) -> bool:
+def validate_vat_ie(vat: str) -> bool:
     """Validates a VAT number against irish VAT format specification.
     In Ireland is also named "Value added tax identification no." (VAT/CBL).
     The number must be in one of the following formats:
@@ -366,7 +379,7 @@ def ireland_vat_rule(vat: str) -> bool:
     return old_style() or new_style()
 
 
-def italy_vat_rule(vat: str) -> bool:
+def validate_vat_it(vat: str) -> bool:
     """Validates a VAT number against italien VAT format specification.
     In Italy is also named "Partita IVA" (P.IVA).
     The number must contain 11 digits and the last digit is the check digit.
@@ -391,46 +404,7 @@ def italy_vat_rule(vat: str) -> bool:
     return c11 == (10 - (s1 + s2) % 10) % 10
 
 
-def latvia_vat_rule(vat: str) -> bool:
-    """Validates a VAT number against latvian VAT format specification.
-    In Latvia is also named "Pievienotās vērtības nodokļa" (PVN).
-    The number must contain 11 digits and can be in one of the following
-    formats:
-
-    - 1st digit is bigger than 3, and so use a MOD 11 algorithm
-    - 1st digit is 3, 2nd digit is 2, followed by 9 digits
-    - 2 digits represent a day of month, followed by 2 digits that represent
-      the month, followed by 2 digits that represent the year, followed by 1
-      digit equals to 0, 1 or 2, followed  by 4 digits
-
-    :param vat: VAT number to validate.
-    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
-    """
-    def style_1() -> bool:
-        match = re.match(r'^(LV)?([4-9]\d{10})$', vat)
-        if not match:
-            return False
-        c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11 = map(int, match.group(2))
-        r = 3 - ((9 * c1 + 1 * c2 + 4 * c3 + 8 * c4 + 3 * c5 + 10 * c6 +
-                  2 * c7 + 5 * c8 + 7 * c9 + 6 * c10) % 11)
-        return (r != -1) and ((r < -1 and c11 == r + 11) or
-                              (r > -1 and c11 == r))
-
-    def style_2() -> bool:
-        match = re.match(r'^(LV)?32\d{9}', vat)
-        return bool(match)
-
-    def style_3() -> bool:
-        match = re.match(r'^(LV)?(\d{2})(\d{2})(\d{2})[012](\d{4})$', vat)
-        if not match:
-            return False
-        day, month, year = map(int, match.groups()[1:4])
-        return day in range(0, 31) and month in range(0, 12)
-
-    return style_1() or style_2() or style_3()
-
-
-def lithuania_vat_rule(vat: str) -> bool:
+def validate_vat_lt(vat: str) -> bool:
     """Validates a VAT number against lithuanian VAT format specification.
     In Lithuania is also named "Pridėtinės vertės mokestis" (PVM KODAS).
     The number must contain 9 or 12 digits.
@@ -475,7 +449,7 @@ def lithuania_vat_rule(vat: str) -> bool:
     return legal_persons_style() or temporary_registered_taxpayers_style()
 
 
-def luxembourg_vat_rule(vat: str) -> bool:
+def validate_vat_lu(vat: str) -> bool:
     """Validates a VAT number against luxembourg VAT format specification.
     In Luxembourg is also named "Numéro d'identification à la taxe sur la
     valeur ajoutée" (No. TVA).
@@ -493,7 +467,46 @@ def luxembourg_vat_rule(vat: str) -> bool:
     return c7_c8 == c1_c6 % 89
 
 
-def malta_vat_rule(vat: str) -> bool:
+def validate_vat_lv(vat: str) -> bool:
+    """Validates a VAT number against latvian VAT format specification.
+    In Latvia is also named "Pievienotās vērtības nodokļa" (PVN).
+    The number must contain 11 digits and can be in one of the following
+    formats:
+
+    - 1st digit is bigger than 3, and so use a MOD 11 algorithm
+    - 1st digit is 3, 2nd digit is 2, followed by 9 digits
+    - 2 digits represent a day of month, followed by 2 digits that represent
+      the month, followed by 2 digits that represent the year, followed by 1
+      digit equals to 0, 1 or 2, followed  by 4 digits
+
+    :param vat: VAT number to validate.
+    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
+    """
+    def style_1() -> bool:
+        match = re.match(r'^(LV)?([4-9]\d{10})$', vat)
+        if not match:
+            return False
+        c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11 = map(int, match.group(2))
+        r = 3 - ((9 * c1 + 1 * c2 + 4 * c3 + 8 * c4 + 3 * c5 + 10 * c6 +
+                  2 * c7 + 5 * c8 + 7 * c9 + 6 * c10) % 11)
+        return (r != -1) and ((r < -1 and c11 == r + 11) or
+                              (r > -1 and c11 == r))
+
+    def style_2() -> bool:
+        match = re.match(r'^(LV)?32\d{9}', vat)
+        return bool(match)
+
+    def style_3() -> bool:
+        match = re.match(r'^(LV)?(\d{2})(\d{2})(\d{2})[012](\d{4})$', vat)
+        if not match:
+            return False
+        day, month, year = map(int, match.groups()[1:4])
+        return day in range(0, 31) and month in range(0, 12)
+
+    return style_1() or style_2() or style_3()
+
+
+def validate_vat_mt(vat: str) -> bool:
     """Validates a VAT number against maltese VAT format specification.
     In Malta is also named "Vat reg. no." (VAT No.).
     The number must contain 8 digits and the last two digits are the check
@@ -512,7 +525,7 @@ def malta_vat_rule(vat: str) -> bool:
     return (r == 0 and c7_c8 == 37) or (c7_c8 == r)
 
 
-def netherlands_vat_rule(vat: str) -> bool:
+def validate_vat_nl(vat: str) -> bool:
     """Validates a VAT number against netherlands VAT format specification.
     In Netherlands is also named "Btw-nummer" Btw-nr.).
     The number must contain 9 digits followed by the letter 'B' followed by 2
@@ -532,7 +545,7 @@ def netherlands_vat_rule(vat: str) -> bool:
     return r != 10 and r == c9
 
 
-def poland_vat_rule(vat: str) -> bool:
+def validate_vat_pl(vat: str) -> bool:
     """Validates a VAT number against polish VAT format specification.
     In Poland is also named "numer identyfikacji podatkowej" (NIP).
     The number must contain 10 digits and the last digit is the check digit.
@@ -550,7 +563,7 @@ def poland_vat_rule(vat: str) -> bool:
     return r != 10 and r == c10
 
 
-def portugal_vat_rule(vat: str) -> bool:
+def validate_vat_pt(vat: str) -> bool:
     """Validates a VAT number against portuguese VAT format specification.
     In Portugal is also named "Número de Identificação Fiscal" (NIF).
     The number must contain 9 digits and the last digit is the check digit.
@@ -570,7 +583,7 @@ def portugal_vat_rule(vat: str) -> bool:
     return ((r == 10 or r == 11) and c9 == 0) or (c9 == r)
 
 
-def romania_vat_rule(vat: str) -> bool:
+def validate_vat_ro(vat: str) -> bool:
     """Validates a VAT number against romanian VAT format specification.
     In Romania is also named "Codul de identificare fiscală" (CIF).
     The number must contain 2 to 10 digits and the last digit is the check
@@ -592,13 +605,29 @@ def romania_vat_rule(vat: str) -> bool:
     return check_digit == digits[-1]
 
 
-def spain_vat_rule(vat: str) -> bool:
-    # TODO
-    match = re.match(r'^(ES)?\w\d{7}\w$', vat)
-    return bool(match)
+def validate_vat_se(vat: str) -> bool:
+    """Validates a VAT number against swedish VAT format specification.
+    In Sweden is also named "momsregistreringsnummer" (Momsnr).
+    The number must contain 12 digits.
+
+    :param vat: VAT number to validate.
+    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
+    """
+    match = re.match(r'^(SE)?(\d{12})$', vat)
+    if not match:
+        return False
+    c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12 = map(int,
+                                                            match.group(2))
+    s1 = int(c1 / 5) + (c1 * 2) % 10
+    s3 = int(c3 / 5) + (c3 * 2) % 10
+    s5 = int(c5 / 5) + (c5 * 2) % 10
+    s7 = int(c7 / 5) + (c7 * 2) % 10
+    s9 = int(c9 / 5) + (c9 * 2) % 10
+    r = s1 + s3 + s5 + s7 + s9
+    return c10 == (10 - (r + c2 + c4 + c6 + c8) % 10) % 10
 
 
-def slovenia_vat_rule(vat: str) -> bool:
+def validate_vat_si(vat: str) -> bool:
     """Validates a VAT number against slovenian VAT format specification.
     In Slovenia is also named "Davčna številka" (ID za DDV).
     The number must contain 8 digits and the last digit is the check digit.
@@ -616,9 +645,9 @@ def slovenia_vat_rule(vat: str) -> bool:
     return (r != 11) and ((r == 10 and c8 == 0) or (c8 == r))
 
 
-def slovakia_vat_rule(vat: str) -> bool:
+def validate_vat_sk(vat: str) -> bool:
     """Validates a VAT number against slovakian VAT format specification.
-    In Slovakia is also named "	Identifikačné číslo pre daň z pridanej hodnoty"
+    In Slovakia is also named "Identifikačné číslo pre daň z pridanej hodnoty"
     (IČ DPH).
     The number must contain 10 digits and be divisible by 11.
 
@@ -631,55 +660,34 @@ def slovakia_vat_rule(vat: str) -> bool:
     return int(match.group(2)) % 11 == 0
 
 
-def sweden_vat_rule(vat: str) -> bool:
-    match = re.match(r'^(SE)?(\d{12})$', vat)
-    if not match:
-        return False
-    c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12 = map(int,
-                                                            match.group(2))
-    s1 = int(c1 / 5) + (c1 * 2) % 10
-    s3 = int(c3 / 5) + (c3 * 2) % 10
-    s5 = int(c5 / 5) + (c5 * 2) % 10
-    s7 = int(c7 / 5) + (c7 * 2) % 10
-    s9 = int(c9 / 5) + (c9 * 2) % 10
-    r = s1 + s3 + s5 + s7 + s9
-    return c10 == (10 - (r + c2 + c4 + c6 + c8) % 10) % 10
-
-
-def united_kingdom_vat_rule(vat: str) -> bool:
-    # TODO
-    match = re.match(r'^(GB)?(\d{9}(\d{3})?|[A-Z]{2}\d{3})$', vat)
-    return bool(match)
-
-
 #: Maps a country code to the respective country VAT rule
 EU_RULES: Dict[str, Callable[[str], bool]] = {
-    'AT': austria_vat_rule,
-    'BE': belgium_vat_rule,
-    'BG': bulgaria_vat_rule,
-    'HR': croatia_vat_rule,
-    'CY': cyprus_vat_rule,
-    'CZ': czech_republic_vat_rule,
-    'DE': germany_vat_rule,
-    'DK': denmark_vat_rule,
-    'EE': estonia_vat_rule,
-    'EL': greece_vat_rule,
-    'ES': spain_vat_rule,
-    'FI': finland_vat_rule,
-    'FR': france_vat_rule,
-    'GB': united_kingdom_vat_rule,
-    'HU': hungary_vat_rule,
-    'IE': ireland_vat_rule,
-    'IT': italy_vat_rule,
-    'LT': lithuania_vat_rule,
-    'LU': luxembourg_vat_rule,
-    'LV': latvia_vat_rule,
-    'MT': malta_vat_rule,
-    'NL': netherlands_vat_rule,
-    'PL': poland_vat_rule,
-    'PT': portugal_vat_rule,
-    'RO': romania_vat_rule,
-    'SE': sweden_vat_rule,
-    'SI': slovenia_vat_rule,
-    'SK': slovakia_vat_rule,
+    'AT': validate_vat_au,
+    'BE': validate_vat_be,
+    'BG': validate_vat_bg,
+    'HR': validate_vat_hr,
+    'CY': validate_vat_cy,
+    'CZ': validate_vat_cz,
+    'DE': validate_vat_de,
+    'DK': validate_vat_dk,
+    'EE': validate_vat_ee,
+    'EL': validate_vat_el,
+    'ES': validate_vat_es,
+    'FI': validate_vat_fi,
+    'FR': validate_vat_fr,
+    'GB': validate_vat_gb,
+    'HU': validate_vat_hu,
+    'IE': validate_vat_ie,
+    'IT': validate_vat_it,
+    'LT': validate_vat_lt,
+    'LU': validate_vat_lu,
+    'LV': validate_vat_lv,
+    'MT': validate_vat_mt,
+    'NL': validate_vat_nl,
+    'PL': validate_vat_pl,
+    'PT': validate_vat_pt,
+    'RO': validate_vat_ro,
+    'SE': validate_vat_se,
+    'SI': validate_vat_si,
+    'SK': validate_vat_sk,
 }
