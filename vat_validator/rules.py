@@ -10,6 +10,7 @@ a country VAT format rules.
    This wikipedia page contains a great overview of the different formats:
    https://en.wikipedia.org/wiki/VAT_identification_number
 """
+from functools import reduce
 from math import floor, ceil
 from typing import Callable, Dict
 import re
@@ -267,9 +268,21 @@ def france_vat_rule(vat: str) -> bool:
 
 
 def germany_vat_rule(vat: str) -> bool:
-    # TODO
+    """Validates a VAT number against german VAT format specification.
+    In Germany is also named "Umsatzsteuer-Identifikationsnummer" (USt-IdNr).
+    The number must contain 9 digits and the first one cannot be 0.
+
+    :param vat: VAT number to validate.
+    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
+    """
     match = re.match(r'^(DE)?(\d{9})$', vat)
-    return bool(match)
+    if not match:
+        return False
+    *c1_c8, c9 = map(int, match.group(2))
+    p = reduce(lambda x, c: ((2 * (10 if (c + x) % 10 == 0 else (c + x) % 10))
+                             % 11), c1_c8, 10)
+    r = 11 - p
+    return (c1_c8[0] > 0) and ((r == 10 and c9 == 0) or (c9 == r))
 
 
 def greece_vat_rule(vat: str) -> bool:
