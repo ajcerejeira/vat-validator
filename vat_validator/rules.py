@@ -340,8 +340,8 @@ def ireland_vat_rule(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    def old_style(code: str) -> bool:
-        match = re.match(r'^(IE)?(\d)([A-Z+*])(\d{5})([A-W])', code)
+    def old_style() -> bool:
+        match = re.match(r'^(IE)?(\d)([A-Z+*])(\d{5})([A-W])', vat)
         if not match:
             return False
         c1 = int(match.group(2))
@@ -351,8 +351,8 @@ def ireland_vat_rule(vat: str) -> bool:
         check_chars = 'WABCDEFGHIJKLMNOPQRSTUV'
         return c8 == check_chars[r]
 
-    def new_style(code: str) -> bool:
-        match = re.match(r'^(IE)?(\d{7})([A-W])([A-IW])?', code)
+    def new_style() -> bool:
+        match = re.match(r'^(IE)?(\d{7})([A-W])([A-IW])?', vat)
         if not match:
             return False
         c1, c2, c3, c4, c5, c6, c7 = map(int, match.group(2))
@@ -363,7 +363,7 @@ def ireland_vat_rule(vat: str) -> bool:
         check_chars = 'WABCDEFGHIJKLMNOPQRSTUV'
         return (r < len(check_chars)) and (c8 == check_chars[r])
 
-    return old_style(vat) or new_style(vat)
+    return old_style() or new_style()
 
 
 def italy_vat_rule(vat: str) -> bool:
@@ -406,8 +406,8 @@ def latvia_vat_rule(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    def style_1(code: str) -> bool:
-        match = re.match(r'^(LV)?([4-9]\d{10})$', code)
+    def style_1() -> bool:
+        match = re.match(r'^(LV)?([4-9]\d{10})$', vat)
         if not match:
             return False
         c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11 = map(int, match.group(2))
@@ -416,24 +416,63 @@ def latvia_vat_rule(vat: str) -> bool:
         return (r != -1) and ((r < -1 and c11 == r + 11) or
                               (r > -1 and c11 == r))
 
-    def style_2(code: str) -> bool:
-        match = re.match(r'^(LV)?32\d{9}', code)
+    def style_2() -> bool:
+        match = re.match(r'^(LV)?32\d{9}', vat)
         return bool(match)
 
-    def style_3(code: str) -> bool:
-        match = re.match(r'^(LV)?(\d{2})(\d{2})(\d{2})[012](\d{4})$', code)
+    def style_3() -> bool:
+        match = re.match(r'^(LV)?(\d{2})(\d{2})(\d{2})[012](\d{4})$', vat)
         if not match:
             return False
         day, month, year = map(int, match.groups()[1:4])
         return day in range(0, 31) and month in range(0, 12)
 
-    return style_1(vat) or style_2(vat) or style_3(vat)
+    return style_1() or style_2() or style_3()
 
 
 def lithuania_vat_rule(vat: str) -> bool:
-    # TODO
-    match = re.match(r'^(LT)?(\d{9}|\d{12})$', vat)
-    return bool(match)
+    """Validates a VAT number against lithuanian VAT format specification.
+    In Lithuania is also named "Pridėtinės vertės mokestis" (PVM KODAS).
+    The number must contain 9 or 12 digits.
+
+    :param vat: VAT number to validate.
+    :return: ``True`` if the given VAT is valid, ``False`` otherwise.
+    """
+
+    def legal_persons_style() -> bool:
+        match = re.match(r'^(LT)?(\d{9})$', vat)
+        if not match:
+            return False
+        c1, c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
+        if c8 != 1:
+            return False
+        r1 = (1 * c1 + 2 * c2 + 3 * c3 + 4 * c4 + 5 * c5 + 6 * c6 + 7 * c7 +
+              8 * c8) % 11
+        r2 = (3 * c1 + 4 * c2 + 5 * c3 + 6 * c4 + 7 * c5 + 8 * c6 + 9 * c7 +
+              1 * c8) % 11
+        if r1 % 10 != 0:
+            return c9 == r1
+        else:
+            return (r2 == 10 and c9 == 0) or (c9 == r2)
+
+    def temporary_registered_taxpayers_style() -> bool:
+        match = re.match(r'^(LT)?(\d{12})$', vat)
+        if not match:
+            return False
+        c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12 = map(int,
+                                                                match.group(2))
+        if c11 != 1:
+            return False
+        r1 = (1 * c1 + 2 * c2 + 3 * c3 + 4 * c4 + 5 * c5 + 6 * c6 + 7 * c7 +
+              8 * c8 + 9 * c9 + 1 * c10 + 2 * c11) % 11
+        r2 = (3 * c1 + 4 * c2 + 6 * c4 + 7 * c5 + 8 * c6 + 9 * c7 + 1 * c8 +
+              2 * c9 + 3 * c10 + 4 * c11) % 11
+        if r1 % 10 != 0:
+            return c12 == r1
+        else:
+            return (r2 == 10 and c12 == 0) or (c12 == r2)
+
+    return legal_persons_style() or temporary_registered_taxpayers_style()
 
 
 def luxembourg_vat_rule(vat: str) -> bool:
