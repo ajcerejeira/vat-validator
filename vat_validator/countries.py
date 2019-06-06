@@ -759,7 +759,7 @@ def validate_vat_ro(vat: str) -> bool:
     if not match:
         return False
     digits = [int(digit) for digit in match.group(2)]
-    weights = [7, 5, 3, 2, 1, 7, 5, 3, 2][10 - len(digits):]
+    weights = [7, 5, 3, 2, 1, 7, 5, 3, 2][10 - len(digits) :]
     digits_with_weight = zip(digits, weights)
     mod = 10 * sum(digit * weight for digit, weight in digits_with_weight) % 11
     check_digit = 0 if mod == 10 else mod

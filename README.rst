@@ -14,6 +14,9 @@ Pythonic VAT validation library
 .. image:: https://coveralls.io/repos/github/ajcerejeira/vat-validator/badge.svg?branch=master
     :target: https://coveralls.io/github/ajcerejeira/vat-validator?branch=master
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/python/black
+
 
 Getting started
 ===============
