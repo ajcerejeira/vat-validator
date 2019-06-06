@@ -9,8 +9,6 @@ IS0 3166 country code. They receive a string representing a VAT number in that
 country format and return ``True`` or ``False`` whether that code is valid or
 not.
 
-The validation process
-
 **Usage**:
 
 >>> validate_vat_pt('PT980405319')
@@ -34,11 +32,11 @@ code, spaces, punctuation, *etc...*)
 """
 from functools import reduce
 from math import floor, ceil
-from typing import Callable, Dict
+from typing import Callable, Dict, List, Optional
 import re
 
 
-def validate_vat_au(vat: str) -> bool:
+def validate_vat_at(vat: str) -> bool:
     """Validates a VAT number against austrian VAT format specification.
     In Austria is also named "Umsatzsteuer-Identifikationsnummer" (UID).
     The number must contain the letter 'U' followed by 8 digits and the last
@@ -47,16 +45,22 @@ def validate_vat_au(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(AT)?U(\d{8})$', vat)
-    if not match:
+
+    def calc_check_digit(code: str) -> int:
+        c2, c3, c4, c5, c6, c7, c8 = map(int, code)
+        s3 = floor(c3 / 5) + (c3 * 2) % 10
+        s5 = floor(c5 / 5) + (c5 * 2) % 10
+        s7 = floor(c7 / 5) + (c7 * 2) % 10
+        return (10 - (s3 + s5 + s7 + c2 + c4 + c6 + c8 + 4) % 10) % 10
+
+    sanitized_vat = re.sub(r"(^AT)|\s*|\W*", "", vat, flags=re.I)
+    if len(sanitized_vat) != 9:
         return False
-    c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
-    s3 = floor(c3 / 5) + (c3 * 2) % 10
-    s5 = floor(c5 / 5) + (c5 * 2) % 10
-    s7 = floor(c7 / 5) + (c7 * 2) % 10
-    r = s3 + s5 + s7
-    check_digit = (10 - (r + c2 + c4 + c6 + c8 + 4) % 10) % 10
-    return check_digit == c9
+    if sanitized_vat[0] != "U" and sanitized_vat[0] != "u":
+        return False
+    if not sanitized_vat[1:].isdigit():
+        return False
+    return calc_check_digit(sanitized_vat[1:-1]) == int(sanitized_vat[-1])
 
 
 def validate_vat_be(vat: str) -> bool:
@@ -68,15 +72,17 @@ def validate_vat_be(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(BE)?([01]?\d{9})$', vat)
-    if not match:
+    sanitized_vat = re.sub(r"(^BE)|\s*|\W*", "", vat, flags=re.I)
+    # If the VAT is in the old format, convert to the new one
+    if len(sanitized_vat) == 9:
+        sanitized_vat = "0" + sanitized_vat
+    if len(sanitized_vat) != 10:
         return False
-    number = match.group(2)
-    # If the VAT is in the old format, convert it to the new one
-    if len(number) == 9:
-        number = '0' + number
-    check_digits = (97 - int(number[:8])) % 97
-    return check_digits == int(number[8:10])
+    if not sanitized_vat.isdigit():
+        return False
+    if sanitized_vat[0] != "0" or sanitized_vat[1] == "0":
+        return False
+    return 97 - int(sanitized_vat[:-2]) % 97 == int(sanitized_vat[-2:])
 
 
 def validate_vat_bg(vat: str) -> bool:
@@ -88,47 +94,61 @@ def validate_vat_bg(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(BG)?(\d{9})(\d?)$', vat)
-    if not match:
+
+    def calc_check_digit_legal_entity(code: str) -> int:
+        check_digit = sum(i * int(ch) for i, ch in enumerate(code, 1)) % 11
+        if check_digit == 10:
+            check_digit = sum(i * int(ch) for i, ch in enumerate(code, 3)) % 11
+        return check_digit % 10
+
+    def calc_check_digit_person(code: str) -> int:
+        weights = (2, 4, 8, 5, 10, 9, 7, 3, 6)
+        return sum(w * int(ch) for w, ch in zip(weights, code)) % 11 % 10
+
+    def calc_check_digit_foreigner(code: str) -> int:
+        weights = (21, 19, 17, 13, 11, 9, 7, 3, 1)
+        return sum(w * int(ch) for w, ch in zip(weights, code)) % 10
+
+    def calc_check_digit_misc(code: str) -> Optional[int]:
+        weights = (4, 3, 2, 7, 6, 5, 4, 3, 2)
+        check_digit = (
+            11 - sum(w * int(ch) for w, ch in zip(weights, code)) % 11
+        )
+        if check_digit == 11:
+            return 0
+        elif check_digit == 10:
+            return None
+        else:
+            return check_digit
+
+    sanitized_vat = re.sub(r"(^BG)|\s*|\W*", "", vat, flags=re.I)
+    if not sanitized_vat.isdigit():
         return False
-    c1, c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
-    c10 = int(match.group(3)) if match.group(3) else None
+    if len(sanitized_vat) == 9:
+        check_digit = calc_check_digit_legal_entity(sanitized_vat[:-1])
+        return check_digit == int(sanitized_vat[-1])
+    elif len(sanitized_vat) == 10:
+        # Check if it corresponds to a physical person VAT
+        check_digit_person = calc_check_digit_person(sanitized_vat[:-1])
+        year_is_valid = int(sanitized_vat[:2]) in range(0, 100)
+        month_is_valid = int(sanitized_vat[2:4]) in range(1, 41)
+        day_is_valid = int(sanitized_vat[4:6]) in range(1, 31)
+        date_is_valid = year_is_valid and month_is_valid and day_is_valid
+        is_person = (
+            check_digit_person == int(sanitized_vat[-1]) and date_is_valid
+        )
 
-    def legal_entities_style() -> bool:
-        if c10 is not None:
-            return False
-        r1 = ((1 * c1 + 2 * c2 + 3 * c3 + 4 * c4 + 5 * c5 + 6 * c6 + 7 * c7 +
-               8 * c8) % 11)
-        r2 = ((3 * c1 + 4 * c2 + 5 * c3 + 6 * c4 + 7 * c5 + 8 * c6 + 9 * c7 +
-               10 * c8) % 11)
-        return ((c9 == r1) or (r1 == 10 and r2 == 10 and c9 == 0) or
-                (r1 == 10 and r2 != 10 and c9 == r2))
+        # Check if it corresponds to a foreigner VAT
+        check_digit_foreigner = calc_check_digit_foreigner(sanitized_vat[:-1])
+        is_foreigner = check_digit_foreigner == int(sanitized_vat[-1])
 
-    def physical_persons_style() -> bool:
-        if c10 is None:
-            return False
-        r = (2 * c1 + 4 * c2 + 8 * c3 + 5 * c4 + 10 * c5 + 9 * c6 + 7 * c7 +
-             3 * c8 + 6 * c9) % 11
-        return (r == 10 and c10 == 0) or (c10 == r)
+        # Check if ti corresponds to a miscellaneous VAT
+        check_digit_misc = calc_check_digit_misc(sanitized_vat[:-1])
+        is_miscellaneous = check_digit_misc == int(sanitized_vat[-1])
 
-    def foreigners_style() -> bool:
-        if c10 is None:
-            return False
-        r = (21 * c1 + 19 * c2 + 17 * c3 + 13 * c4 + 11 * c5 + 9 * c6 +
-             7 * c7 + 3 * c8 + 1 * c9) % 10
-        return c10 == r
-
-    def other_style() -> bool:
-        if c10 is None:
-            return False
-        r = 11 - (4 * c1 + 3 * c2 + 2 * c3 + 7 * c4 + 6 * c5 + 5 * c6 +
-                  4 * c7 + 3 * c8 + 2 * c9) % 11
-        return r != 10 and ((r == 11 and r == 0) or (c10 == r))
-
-    return (legal_entities_style() or
-            physical_persons_style() or
-            foreigners_style() or
-            other_style())
+        return is_person or is_foreigner or is_miscellaneous
+    else:
+        return False
 
 
 def validate_vat_cy(vat: str) -> bool:
@@ -140,14 +160,25 @@ def validate_vat_cy(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(CY)?(\d{8})([A-Z])$', vat)
-    if not match:
+
+    def calc_check_char(code: str) -> str:
+        key = [1, 0, 5, 7, 9, 13, 15, 17, 19, 21]
+        check_char = (
+            sum(int(ch) for ch in code[1::2])
+            + sum(key[int(ch)] for ch in code[::2])
+        ) % 26
+        return chr(65 + check_char)
+
+    sanitized_vat = re.sub(r"(^CY)|\s*|\W*", "", vat, flags=re.I)
+    if not sanitized_vat[:-1].isdigit():
         return False
-    c1, c2, c3, c4, c5, c6, c7, c8 = map(int, match.group(2))
-    c9 = match.group(3)
-    k = [1, 0, 5, 7, 9, 13, 15, 17, 19, 21]
-    r = (c2 + c4 + c6 + c8 + k[c1] + k[c3] + k[c5] + k[c7]) % 26
-    return chr(65 + r) == c9
+    if not sanitized_vat[-1].isalpha():
+        return False
+    if len(sanitized_vat) != 9:
+        return False
+    if sanitized_vat[0:2] == "12":
+        return False
+    return calc_check_char(sanitized_vat[:-1]) == sanitized_vat[-1]
 
 
 def validate_vat_cz(vat: str) -> bool:
@@ -159,7 +190,7 @@ def validate_vat_cz(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(CZ)?(\d{8})(\d?)(\d?)$', vat)
+    match = re.match(r"^(CZ)?(\d{8})(\d?)(\d?)$", vat)
     if not match:
         return False
     c1, c2, c3, c4, c5, c6, c7, c8 = map(int, match.group(2))
@@ -176,13 +207,15 @@ def validate_vat_cz(vat: str) -> bool:
     def individuals_style_1():
         if c9 is None or c10 is not None:
             return False
-        year = int(''.join(map(str, [c1, c2])))
-        month = int(''.join(map(str, [c3, c4])))
-        day = int(''.join(map(str, [c5, c6])))
+        year = int("".join(map(str, [c1, c2])))
+        month = int("".join(map(str, [c3, c4])))
+        day = int("".join(map(str, [c5, c6])))
 
-        return (year in range(0, 54) and
-                (month in range(1, 13) or month in range(51, 63)) and
-                day in range(1, 32))
+        return (
+            year in range(0, 54)
+            and (month in range(1, 13) or month in range(51, 63))
+            and day in range(1, 32)
+        )
 
     def individuals_style_2():
         if c9 is None or c10 is not None:
@@ -194,16 +227,22 @@ def validate_vat_cz(vat: str) -> bool:
     def individuals_style_3():
         if c9 is None or c10 is None:
             return False
-        r1 = int(''.join(map(str, [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10])))
-        r2 = (int(''.join(map(str, [c1, c2]))) +
-              int(''.join(map(str, [c3, c4]))) +
-              int(''.join(map(str, [c5, c6]))) +
-              int(''.join(map(str, [c7, c8]))) +
-              int(''.join(map(str, [c9, c10]))))
+        r1 = int("".join(map(str, [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10])))
+        r2 = (
+            int("".join(map(str, [c1, c2])))
+            + int("".join(map(str, [c3, c4])))
+            + int("".join(map(str, [c5, c6])))
+            + int("".join(map(str, [c7, c8])))
+            + int("".join(map(str, [c9, c10])))
+        )
         return r1 % 11 == 0 and r2 % 11 == 0
 
-    return (legal_entities_style() or individuals_style_1() or
-            individuals_style_2() or individuals_style_3())
+    return (
+        legal_entities_style()
+        or individuals_style_1()
+        or individuals_style_2()
+        or individuals_style_3()
+    )
 
 
 def validate_vat_de(vat: str) -> bool:
@@ -214,12 +253,15 @@ def validate_vat_de(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(DE)?(\d{9})$', vat)
+    match = re.match(r"^(DE)?(\d{9})$", vat)
     if not match:
         return False
     *c1_c8, c9 = map(int, match.group(2))
-    p = reduce(lambda x, c: ((2 * (10 if (c + x) % 10 == 0 else (c + x) % 10))
-                             % 11), c1_c8, 10)
+    p = reduce(
+        lambda x, c: ((2 * (10 if (c + x) % 10 == 0 else (c + x) % 10)) % 11),
+        c1_c8,
+        10,
+    )
     r = 11 - p
     return (c1_c8[0] > 0) and ((r == 10 and c9 == 0) or (c9 == r))
 
@@ -235,12 +277,19 @@ def validate_vat_dk(vat: str) -> bool:
 
     .. seealso:: https://erhvervsstyrelsen.dk/modulus_11
     """
-    match = re.match(r'^(DK)?(\d{8})$', vat)
-    if not match:
+
+    def checksum(code: str) -> int:
+        weights = (2, 7, 6, 5, 4, 3, 2, 1)
+        return sum(weight * int(ch) for weight, ch in zip(weights, code)) % 11
+
+    sanitized_vat = re.sub(r"(^DK)|\s*|\W*", "", vat, flags=re.I)
+    if not sanitized_vat.isdigit():
         return False
-    c1, c2, c3, c4, c5, c6, c7, c8 = map(int, match.group(2))
-    r = 2 * c1 + 7 * c2 + 6 * c3 + 5 * c4 + 4 * c5 + 3 * c6 + 2 * c7 + c8
-    return r % 11 == 0
+    if len(sanitized_vat) != 8:
+        return False
+    if sanitized_vat[0] == "0":
+        return False
+    return checksum(sanitized_vat) == 0
 
 
 def validate_vat_ee(vat: str) -> bool:
@@ -251,7 +300,7 @@ def validate_vat_ee(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(EE)?(\d{9})$', vat)
+    match = re.match(r"^(EE)?(\d{9})$", vat)
     if not match:
         return False
     c1, c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
@@ -268,17 +317,25 @@ def validate_vat_el(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(EL|GR)?(\d{9})$', vat)
+    match = re.match(r"^(EL|GR)?(\d{9})$", vat)
     if not match:
         return False
     c1, c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
-    r = (256 * c1 + 128 * c2 + 64 * c3 + 32 * c4 + 16 * c5 + 8 * c6 + 4 * c7 +
-         2 * c8) % 11
+    r = (
+        256 * c1
+        + 128 * c2
+        + 64 * c3
+        + 32 * c4
+        + 16 * c5
+        + 8 * c6
+        + 4 * c7
+        + 2 * c8
+    ) % 11
     return c9 == ((r % 11) % 10)
 
 
 def validate_vat_es(vat: str) -> bool:
-    match = re.match(r'^(ES)?(\w)(\d{7})(\w)$', vat)
+    match = re.match(r"^(ES)?(\w)(\d{7})(\w)$", vat)
     if not match:
         return False
     return bool(match)
@@ -295,13 +352,17 @@ def validate_vat_fi(vat: str) -> bool:
 
     .. seealso:: http://tarkistusmerkit.teppovuori.fi/tarkmerk.htm#y-tunnus2
     """
-    match = re.match(r'^(FI)?(\d{8})$', vat)
-    if not match:
+
+    def checksum(code: str) -> int:
+        weights = (7, 9, 10, 5, 8, 4, 2, 1)
+        return sum(weight * int(ch) for weight, ch in zip(weights, code)) % 11
+
+    sanitized_vat = re.sub(r"(^FI)|\s*|\W*", "", vat, flags=re.I)
+    if not sanitized_vat.isdigit():
         return False
-    c1, c2, c3, c4, c5, c6, c7, c8 = map(int, match.group(2))
-    r = (11 - (7 * c1 + 9 * c2 + 10 * c3 + 5 * c4 + 8 * c5 + 4 * c6 + 2 * c7))\
-        % 11
-    return (r != 10) and ((r == 11 and c8 == 0) or (r == c8))
+    if len(sanitized_vat) != 8:
+        return False
+    return checksum(sanitized_vat) == 0
 
 
 def validate_vat_fr(vat: str) -> bool:
@@ -312,7 +373,7 @@ def validate_vat_fr(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(FR?)?(\d{2})(\d{9})', vat)
+    match = re.match(r"^(FR?)?(\d{2})(\d{9})", vat)
     if not match:
         return False
     return int(match.group(2)) == (int(match.group(3)) * 100 + 12) % 97
@@ -320,7 +381,7 @@ def validate_vat_fr(vat: str) -> bool:
 
 def validate_vat_gb(vat: str) -> bool:
     # TODO
-    match = re.match(r'^(GB)?(\d{9}(\d{3})?|[A-Z]{2}\d{3})$', vat)
+    match = re.match(r"^(GB)?(\d{9}(\d{3})?|[A-Z]{2}\d{3})$", vat)
     return bool(match)
 
 
@@ -333,7 +394,7 @@ def validate_vat_hr(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(HR)?(\d{11})$', vat)
+    match = re.match(r"^(HR)?(\d{11})$", vat)
     if not match:
         return False
     *digits, last_digit = map(int, match.group(2))
@@ -354,7 +415,7 @@ def validate_vat_hu(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(HU)?(\d{8})$', vat)
+    match = re.match(r"^(HU)?(\d{8})$", vat)
     if not match:
         return False
     c1, c2, c3, c4, c5, c6, c7, c8 = map(int, match.group(2))
@@ -375,27 +436,36 @@ def validate_vat_ie(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
+
     def old_style() -> bool:
-        match = re.match(r'^(IE)?(\d)([A-Z+*])(\d{5})([A-W])', vat)
+        match = re.match(r"^(IE)?(\d)([A-Z+*])(\d{5})([A-W])", vat)
         if not match:
             return False
         c1 = int(match.group(2))
         c3, c4, c5, c6, c7 = map(int, match.group(4))
         _, c8 = match.group(3), match.group(5)
         r = (8 * 0 + 7 * c3 + 6 * c4 + 5 * c5 + 4 * c6 + 3 * c7 + 2 * c1) % 23
-        check_chars = 'WABCDEFGHIJKLMNOPQRSTUV'
+        check_chars = "WABCDEFGHIJKLMNOPQRSTUV"
         return c8 == check_chars[r]
 
     def new_style() -> bool:
-        match = re.match(r'^(IE)?(\d{7})([A-W])([A-IW])?', vat)
+        match = re.match(r"^(IE)?(\d{7})([A-W])([A-IW])?", vat)
         if not match:
             return False
         c1, c2, c3, c4, c5, c6, c7 = map(int, match.group(2))
         c8 = match.group(3)
-        c9 = 'WABCDEFGHI'.index(match.group(4)) if match.group(4) else 0
-        r = (9 * c9 + 8 * c1 + 7 * c2 + 6 * c3 + 5 * c4 + 4 * c5 + 3 * c6 +
-             2 * c7) % 23
-        check_chars = 'WABCDEFGHIJKLMNOPQRSTUV'
+        c9 = "WABCDEFGHI".index(match.group(4)) if match.group(4) else 0
+        r = (
+            9 * c9
+            + 8 * c1
+            + 7 * c2
+            + 6 * c3
+            + 5 * c4
+            + 4 * c5
+            + 3 * c6
+            + 2 * c7
+        ) % 23
+        check_chars = "WABCDEFGHIJKLMNOPQRSTUV"
         return (r < len(check_chars)) and (c8 == check_chars[r])
 
     return old_style() or new_style()
@@ -412,7 +482,7 @@ def validate_vat_it(vat: str) -> bool:
 
     .. seealso:: https://en.wikipedia.org/wiki/Luhn_algorithm
     """
-    match = re.match(r'^(IT)?(\d{11})$', vat)
+    match = re.match(r"^(IT)?(\d{11})$", vat)
     if not match:
         return False
     c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11 = map(int, match.group(2))
@@ -436,33 +506,71 @@ def validate_vat_lt(vat: str) -> bool:
     """
 
     def legal_persons_style() -> bool:
-        match = re.match(r'^(LT)?(\d{9})$', vat)
+        match = re.match(r"^(LT)?(\d{9})$", vat)
         if not match:
             return False
         c1, c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
         if c8 != 1:
             return False
-        r1 = (1 * c1 + 2 * c2 + 3 * c3 + 4 * c4 + 5 * c5 + 6 * c6 + 7 * c7 +
-              8 * c8) % 11
-        r2 = (3 * c1 + 4 * c2 + 5 * c3 + 6 * c4 + 7 * c5 + 8 * c6 + 9 * c7 +
-              1 * c8) % 11
+        r1 = (
+            1 * c1
+            + 2 * c2
+            + 3 * c3
+            + 4 * c4
+            + 5 * c5
+            + 6 * c6
+            + 7 * c7
+            + 8 * c8
+        ) % 11
+        r2 = (
+            3 * c1
+            + 4 * c2
+            + 5 * c3
+            + 6 * c4
+            + 7 * c5
+            + 8 * c6
+            + 9 * c7
+            + 1 * c8
+        ) % 11
         if r1 % 10 != 0:
             return c9 == r1
         else:
             return (r2 == 10 and c9 == 0) or (c9 == r2)
 
     def temporary_registered_taxpayers_style() -> bool:
-        match = re.match(r'^(LT)?(\d{12})$', vat)
+        match = re.match(r"^(LT)?(\d{12})$", vat)
         if not match:
             return False
-        c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12 = map(int,
-                                                                match.group(2))
+        c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12 = map(
+            int, match.group(2)
+        )
         if c11 != 1:
             return False
-        r1 = (1 * c1 + 2 * c2 + 3 * c3 + 4 * c4 + 5 * c5 + 6 * c6 + 7 * c7 +
-              8 * c8 + 9 * c9 + 1 * c10 + 2 * c11) % 11
-        r2 = (3 * c1 + 4 * c2 + 6 * c4 + 7 * c5 + 8 * c6 + 9 * c7 + 1 * c8 +
-              2 * c9 + 3 * c10 + 4 * c11) % 11
+        r1 = (
+            1 * c1
+            + 2 * c2
+            + 3 * c3
+            + 4 * c4
+            + 5 * c5
+            + 6 * c6
+            + 7 * c7
+            + 8 * c8
+            + 9 * c9
+            + 1 * c10
+            + 2 * c11
+        ) % 11
+        r2 = (
+            3 * c1
+            + 4 * c2
+            + 6 * c4
+            + 7 * c5
+            + 8 * c6
+            + 9 * c7
+            + 1 * c8
+            + 2 * c9
+            + 3 * c10
+            + 4 * c11
+        ) % 11
         if r1 % 10 != 0:
             return c12 == r1
         else:
@@ -481,7 +589,7 @@ def validate_vat_lu(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(LU)?(\d{8})$', vat)
+    match = re.match(r"^(LU)?(\d{8})$", vat)
     if not match:
         return False
     c1_c6 = int(match.group(2)[:6])
@@ -504,22 +612,37 @@ def validate_vat_lv(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
+
     def style_1() -> bool:
-        match = re.match(r'^(LV)?([4-9]\d{10})$', vat)
+        match = re.match(r"^(LV)?([4-9]\d{10})$", vat)
         if not match:
             return False
         c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11 = map(int, match.group(2))
-        r = 3 - ((9 * c1 + 1 * c2 + 4 * c3 + 8 * c4 + 3 * c5 + 10 * c6 +
-                  2 * c7 + 5 * c8 + 7 * c9 + 6 * c10) % 11)
-        return (r != -1) and ((r < -1 and c11 == r + 11) or
-                              (r > -1 and c11 == r))
+        r = 3 - (
+            (
+                9 * c1
+                + 1 * c2
+                + 4 * c3
+                + 8 * c4
+                + 3 * c5
+                + 10 * c6
+                + 2 * c7
+                + 5 * c8
+                + 7 * c9
+                + 6 * c10
+            )
+            % 11
+        )
+        return (r != -1) and (
+            (r < -1 and c11 == r + 11) or (r > -1 and c11 == r)
+        )
 
     def style_2() -> bool:
-        match = re.match(r'^(LV)?32\d{9}', vat)
+        match = re.match(r"^(LV)?32\d{9}", vat)
         return bool(match)
 
     def style_3() -> bool:
-        match = re.match(r'^(LV)?(\d{2})(\d{2})(\d{2})[012](\d{4})$', vat)
+        match = re.match(r"^(LV)?(\d{2})(\d{2})(\d{2})[012](\d{4})$", vat)
         if not match:
             return False
         day, month, year = map(int, match.groups()[1:4])
@@ -538,11 +661,11 @@ def validate_vat_mt(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(MT)?(\d{8})$', vat)
+    match = re.match(r"^(MT)?(\d{8})$", vat)
     if not match:
         return False
     c1, c2, c3, c4, c5, c6, c7, c8 = map(int, match.group(2))
-    c7_c8 = int(''.join(map(str, [c7, c8])))
+    c7_c8 = int("".join(map(str, [c7, c8])))
     r = 37 - (3 * c1 + 4 * c2 + 6 * c3 + 7 * c4 + 8 * c5 + 9 * c6) % 37
     return (r == 0 and c7_c8 == 37) or (c7_c8 == r)
 
@@ -557,13 +680,14 @@ def validate_vat_nl(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(NL)?(\d{9})B(\d{2})$', vat)
+    match = re.match(r"^(NL)?(\d{9})B(\d{2})$", vat)
     if not match:
         return False
     c1, c2, c3, c4, c5, c6, c7, c8, c9 = map(int, match.group(2))
     c11, c12 = map(int, match.group(3))
-    r = ((9 * c1 + 8 * c2 + 7 * c3 + 6 * c4 + 5 * c5 + 4 * c6 + 3 * c7 +
-          2 * c8) % 11)
+    r = (
+        9 * c1 + 8 * c2 + 7 * c3 + 6 * c4 + 5 * c5 + 4 * c6 + 3 * c7 + 2 * c8
+    ) % 11
     return r != 10 and r == c9
 
 
@@ -576,12 +700,21 @@ def validate_vat_pl(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(PL)?(\d{10})$', vat)
+    match = re.match(r"^(PL)?(\d{10})$", vat)
     if not match:
         return False
     c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = map(int, match.group(2))
-    r = (6 * c1 + 5 * c2 + 7 * c3 + 2 * c4 + 3 * c5 + 4 * c6 + 5 * c7 +
-         6 * c8 + 7 * c9) % 11
+    r = (
+        6 * c1
+        + 5 * c2
+        + 7 * c3
+        + 2 * c4
+        + 3 * c5
+        + 4 * c6
+        + 5 * c7
+        + 6 * c8
+        + 7 * c9
+    ) % 11
     return r != 10 and r == c10
 
 
@@ -596,17 +729,19 @@ def validate_vat_pt(vat: str) -> bool:
 
     .. seealso:: https://pt.wikipedia.org/wiki/Número_de_identificação_fiscal
     """
-    def calc_check_digit(code: str) -> str:
-        s = sum((9 - index) * int(digit)
-                for index, digit in enumerate(code[:-1]))
-        return str((11 - s) % 11 % 10)
 
-    sanitized_vat = re.sub(r'(^PT)|\s*|\W*', '', vat, flags=re.I)
+    def calc_check_digit(code: str) -> int:
+        check_digit = sum((9 - i) * int(ch) for i, ch in enumerate(code))
+        return (11 - check_digit) % 11 % 10
+
+    sanitized_vat = re.sub(r"(^PT)|\s*|\W*", "", vat, flags=re.I)
     if not sanitized_vat.isdigit():
         return False
     if len(sanitized_vat) != 9:
         return False
-    return calc_check_digit(sanitized_vat) == sanitized_vat[-1]
+    if sanitized_vat[0] == "0":
+        return False
+    return calc_check_digit(sanitized_vat[:-1]) == int(sanitized_vat[-1])
 
 
 def validate_vat_ro(vat: str) -> bool:
@@ -620,7 +755,7 @@ def validate_vat_ro(vat: str) -> bool:
 
     .. seealso:: https://vatdesk.eu/en/romania/
     """
-    match = re.match(r'^(RO)?(\d{2,10})$', vat)
+    match = re.match(r"^(RO)?(\d{2,10})$", vat)
     if not match:
         return False
     digits = [int(digit) for digit in match.group(2)]
@@ -639,11 +774,12 @@ def validate_vat_se(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(SE)?(\d{12})$', vat)
+    match = re.match(r"^(SE)?(\d{12})$", vat)
     if not match:
         return False
-    c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12 = map(int,
-                                                            match.group(2))
+    c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12 = map(
+        int, match.group(2)
+    )
     s1 = int(c1 / 5) + (c1 * 2) % 10
     s3 = int(c3 / 5) + (c3 * 2) % 10
     s5 = int(c5 / 5) + (c5 * 2) % 10
@@ -662,12 +798,13 @@ def validate_vat_si(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(SI)?(\d{8})$', vat)
+    match = re.match(r"^(SI)?(\d{8})$", vat)
     if not match:
         return False
     c1, c2, c3, c4, c5, c6, c7, c8 = map(int, match.group(2))
-    r = 11 - ((c1 * 8 + c2 * 7 + c3 * 6 + c4 * 5 + c5 * 4 + c6 * 3 + c7 * 2)
-              % 11)
+    r = 11 - (
+        (c1 * 8 + c2 * 7 + c3 * 6 + c4 * 5 + c5 * 4 + c6 * 3 + c7 * 2) % 11
+    )
     return (r != 11) and ((r == 10 and c8 == 0) or (c8 == r))
 
 
@@ -680,7 +817,7 @@ def validate_vat_sk(vat: str) -> bool:
     :param vat: VAT number to validate.
     :return: ``True`` if the given VAT is valid, ``False`` otherwise.
     """
-    match = re.match(r'^(SK)?(\d{10})$', vat)
+    match = re.match(r"^(SK)?(\d{10})$", vat)
     if not match:
         return False
     return int(match.group(2)) % 11 == 0
@@ -688,32 +825,35 @@ def validate_vat_sk(vat: str) -> bool:
 
 #: Maps a country code to the respective country VAT rule
 EU_RULES: Dict[str, Callable[[str], bool]] = {
-    'AT': validate_vat_au,
-    'BE': validate_vat_be,
-    'BG': validate_vat_bg,
-    'HR': validate_vat_hr,
-    'CY': validate_vat_cy,
-    'CZ': validate_vat_cz,
-    'DE': validate_vat_de,
-    'DK': validate_vat_dk,
-    'EE': validate_vat_ee,
-    'EL': validate_vat_el,
-    'ES': validate_vat_es,
-    'FI': validate_vat_fi,
-    'FR': validate_vat_fr,
-    'GB': validate_vat_gb,
-    'HU': validate_vat_hu,
-    'IE': validate_vat_ie,
-    'IT': validate_vat_it,
-    'LT': validate_vat_lt,
-    'LU': validate_vat_lu,
-    'LV': validate_vat_lv,
-    'MT': validate_vat_mt,
-    'NL': validate_vat_nl,
-    'PL': validate_vat_pl,
-    'PT': validate_vat_pt,
-    'RO': validate_vat_ro,
-    'SE': validate_vat_se,
-    'SI': validate_vat_si,
-    'SK': validate_vat_sk,
+    "AT": validate_vat_at,
+    "BE": validate_vat_be,
+    "BG": validate_vat_bg,
+    "HR": validate_vat_hr,
+    "CY": validate_vat_cy,
+    "CZ": validate_vat_cz,
+    "DE": validate_vat_de,
+    "DK": validate_vat_dk,
+    "EE": validate_vat_ee,
+    "EL": validate_vat_el,
+    "ES": validate_vat_es,
+    "FI": validate_vat_fi,
+    "FR": validate_vat_fr,
+    "GB": validate_vat_gb,
+    "HU": validate_vat_hu,
+    "IE": validate_vat_ie,
+    "IT": validate_vat_it,
+    "LT": validate_vat_lt,
+    "LU": validate_vat_lu,
+    "LV": validate_vat_lv,
+    "MT": validate_vat_mt,
+    "NL": validate_vat_nl,
+    "PL": validate_vat_pl,
+    "PT": validate_vat_pt,
+    "RO": validate_vat_ro,
+    "SE": validate_vat_se,
+    "SI": validate_vat_si,
+    "SK": validate_vat_sk,
 }
+
+#: List of european union country codes
+EU_COUNTRY_CODES: List[str] = list(EU_RULES.keys())
