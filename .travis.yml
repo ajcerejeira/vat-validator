@@ -8,7 +8,7 @@ install:
   - pip install coveralls
 script:
   # Check code style
-  - black --check vat_validator/ tests/
+  - black -l 79 --check vat_validator/ tests/
   # Run linters
   - mypy -m vat_validator
   - flake8 vat_validator tests
