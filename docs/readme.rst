@@ -1,2 +1,3 @@
 .. include:: ../README.rst
-   :start-after: getting-started
+   :start-after: begin-getting-started
+   :end-before: end-gettings-started

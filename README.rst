@@ -35,7 +35,7 @@ Features
 Getting started
 ===============
 
-.. getting-started
+.. begin-getting-started
 
 Instalation
 ===========
@@ -60,6 +60,8 @@ Usage
 >>> from vat_validator import validate_vat, countries_where_vat_is_valid
 >>> validate_vat('PT', 'PT-980 405 319')
 True
+
+.. end-getting-started
 
 
 ============
