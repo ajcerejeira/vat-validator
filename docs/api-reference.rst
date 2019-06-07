@@ -2,6 +2,13 @@
 API reference
 =============
 
+:mod:`vat_validator.vies`
+=========================
+
+.. automodule:: vat_validator.vies
+   :members:
+
+
 :mod:`vat_validator.utils`
 ==========================
 
