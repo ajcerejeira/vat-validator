@@ -755,15 +755,22 @@ def validate_vat_ro(vat: str) -> bool:
 
     .. seealso:: https://vatdesk.eu/en/romania/
     """
-    match = re.match(r"^(RO)?(\d{2,10})$", vat)
-    if not match:
+
+    def calc_check_digit(code: str) -> int:
+        index = 10 - len(code)
+        weights = [7, 5, 3, 2, 1, 7, 5, 3, 2][index:]
+        check_digit = (
+            10
+            * sum(weight * int(ch) for weight, ch in zip(weights, code)) % 11
+        )
+        return 0 if check_digit == 10 else check_digit
+
+    sanitized_vat = re.sub(r"(^RO)|\s*|\W*", "", vat, flags=re.I)
+    if len(sanitized_vat) not in range(2, 11):
         return False
-    digits = [int(digit) for digit in match.group(2)]
-    weights = [7, 5, 3, 2, 1, 7, 5, 3, 2][10 - len(digits) :]
-    digits_with_weight = zip(digits, weights)
-    mod = 10 * sum(digit * weight for digit, weight in digits_with_weight) % 11
-    check_digit = 0 if mod == 10 else mod
-    return check_digit == digits[-1]
+    if not sanitized_vat.isdigit():
+        return False
+    return calc_check_digit(sanitized_vat) == int(sanitized_vat[-1])
 
 
 def validate_vat_se(vat: str) -> bool:
