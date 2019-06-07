@@ -19,7 +19,7 @@ Pythonic VAT validation library 🌍💳✔
 
 
 Features
---------
+========
 
 - Offline VAT code validation using country specific regular expressions and
   checksum algorithms;
@@ -38,7 +38,7 @@ Getting started
 .. getting-started
 
 Instalation
------------
+===========
 
 ``vat-validator`` is distributed as standard pip library, and can be installed
 by running:
@@ -55,7 +55,7 @@ To install the latest development version directly from git:
 
 
 Usage
------
+=====
 
 >>> from vat_validator import validate_vat, countries_where_vat_is_valid
 >>> validate_vat('PT', 'PT-980 405 319')
