@@ -24,4 +24,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
         'Topic :: Office/Business :: Financial',
     ],
+    install_requires=[
+        "zeep",
+    ]
 )

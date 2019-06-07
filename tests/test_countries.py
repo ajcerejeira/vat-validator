@@ -6,7 +6,7 @@ from vat_validator.countries import validate_vat_be, validate_vat_bg
 from vat_validator.countries import validate_vat_pl, validate_vat_pt
 
 
-class ValidateVATTestCase(unittest.TestCase):
+class CountriesTestCase(unittest.TestCase):
     def setUp(self):
         self.data_dir = Path(__file__).parent / "data"
         self.vat_codes = {}
