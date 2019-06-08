@@ -82,14 +82,13 @@ CheckVATResult(country_code='PT', vat='502011378', request_date=datetime.date(20
 Contributing
 ============
 
-Pull requests are welcome! Please check the CONTRIBUTING_ guide for
-contribution guidelines.
-
+Pull requests are welcome! Please check the
+:ref:`contributing guide <contributing-guide>` for contribution guidelines.
 
 
 =======
 License
 =======
 
-This software is distrubuted under MIT license. See the LICENSE_ file for
-details.
+This software is distrubuted under MIT license. See the
+:download:`LICENSE <../LICENSE>` file for details.
