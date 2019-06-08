@@ -18,7 +18,6 @@ script:
   - coveralls
 deploy:
   provider: pypi
-  server: https://test.pypi.org/legacy/
   user: $PYPI_USERNAME
   password: $PYPI_PASSWORD
   on:
