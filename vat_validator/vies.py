@@ -8,10 +8,10 @@ from the entity with that VAT.
 >>> check_vat('PT', '502011378')
 CheckVATResult(country_code='PT',
                vat='502011378',
-               request_date=datetime.date(2019, 6, 6), valid=True,
+               request_date=datetime.date(2019, 6, 6),
+               valid=True,
                name='UNIVERSIDADE DO MINHO',
-               address='LG DO PACO\nBRAGA\n4700-320 BRAGA')
-
+               address='LG DO PACO\\nBRAGA\\n4700-320 BRAGA')
 
 .. seealso::
 
@@ -39,7 +39,7 @@ WSDL_URL = "http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl"
 @dataclass(frozen=True)
 class CheckVATResult:
     """Represents the result obtained by running the function
-    :function:`check_vat`.
+    :func:`check_vat`.
 
     :param country_code: IS0 3166 country code.
     :param vat: VAT number.

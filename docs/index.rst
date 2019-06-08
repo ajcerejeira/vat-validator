@@ -19,13 +19,18 @@ Table of contents
    readme
 
 
-
 .. toctree::
    :maxdepth: 1
-   :caption: Reference
+   :caption: API reference
 
    api-reference
 
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contributing
+
+   contributing
 
 
 Indices and tables

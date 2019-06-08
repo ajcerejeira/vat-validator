@@ -2,7 +2,7 @@
 vat-validator
 =============
 
-Pythonic VAT validation library 🌍💳✔
+Pythonic VAT validation library 🌍💳✅
 
 .. image:: https://travis-ci.com/ajcerejeira/vat-validator.svg?branch=master
     :target: https://travis-ci.com/ajcerejeira/vat-validator
@@ -82,7 +82,9 @@ CheckVATResult(country_code='PT', vat='502011378', request_date=datetime.date(20
 Contributing
 ============
 
-Comming soon...
+Pull requests are welcome! Please check the CONTRIBUTING_ guide for
+contribution guidelines.
+
 
 
 =======
@@ -91,5 +93,3 @@ License
 
 This software is distrubuted under MIT license. See the LICENSE_ file for
 details.
-
-.. _LICENSE: LICENSE
