@@ -6,7 +6,8 @@ from the entity with that VAT.
 **Usage**:
 
 >>> check_vat('PT', '502011378')
-CheckVATResult(country_code='PT', vat='502011378',
+CheckVATResult(country_code='PT',
+               vat='502011378',
                request_date=datetime.date(2019, 6, 6), valid=True,
                name='UNIVERSIDADE DO MINHO',
                address='LG DO PACO\nBRAGA\n4700-320 BRAGA')
@@ -29,6 +30,7 @@ from zeep.cache import InMemoryCache
 from zeep.transports import Transport
 
 from .countries import EU_COUNTRY_CODES
+from .utils import sanitize_vat
 
 
 WSDL_URL = "http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl"
@@ -64,13 +66,14 @@ def check_vat(country_code: str, vat: str) -> CheckVATResult:
     :return: instance of :class:`CheckVATResult`.
     :raises ValueError: when the country code is invalid or the VAT is empty.
     """
+    sanitized_vat = sanitize_vat(vat)
     if country_code not in EU_COUNTRY_CODES:
         raise ValueError("Invalid country code")
-    if not vat:
+    if not sanitized_vat:
         raise ValueError("Empty VAT number")
     transport = Transport(cache=InMemoryCache())
     client = Client(WSDL_URL, transport=transport)
-    result = client.service.checkVat(country_code, vat)
+    result = client.service.checkVat(country_code, sanitized_vat)
     return CheckVATResult(
         country_code=result["countryCode"],
         vat=result["vatNumber"],

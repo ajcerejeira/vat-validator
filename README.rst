@@ -6,6 +6,7 @@ Pythonic VAT validation library 🌍💳✔
 
 .. image:: https://travis-ci.com/ajcerejeira/vat-validator.svg?branch=master
     :target: https://travis-ci.com/ajcerejeira/vat-validator
+    :alt: Build status
 
 .. image:: https://readthedocs.org/projects/vat-validator/badge/?version=latest
     :target: https://vat-validator.readthedocs.io/en/latest/?badge=latest
@@ -13,9 +14,15 @@ Pythonic VAT validation library 🌍💳✔
 
 .. image:: https://coveralls.io/repos/github/ajcerejeira/vat-validator/badge.svg?branch=master
     :target: https://coveralls.io/github/ajcerejeira/vat-validator?branch=master
+    :alt: Coverage status
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/python/black
+    :alt: Code style: black
+
+.. image:: https://img.shields.io/github/license/ajcerejeira/vat-validator.svg
+    :target: https://github.com/ajcerejeira/vat-validator/blob/master/LICENSE
+    :alt: License: MIT
 
 
 Features
@@ -24,6 +31,7 @@ Features
 - Offline VAT code validation using country specific regular expressions and
   checksum algorithms;
 - Online validation for European Union VAT codes using VIES_ webservice;
+- VAT code sanitization;
 - Fully annotated with type hints, for a better IDE and ``mypy`` development
   experience;
 - Tested and validated against 1697 different VAT codes.
@@ -58,8 +66,14 @@ Usage
 =====
 
 >>> from vat_validator import validate_vat, countries_where_vat_is_valid
->>> validate_vat('PT', 'PT-980 405 319')
+>>> validate_vat('PT', 'PT 502 011 378')
 True
+>>> countries_where_vat_is_valid('502 011 378')
+['PT']
+
+>>> from vat_validator.vies import check_vat
+>>> check_vat('PT', '502 011 378')
+CheckVATResult(country_code='PT', vat='502011378', request_date=datetime.date(2019, 6, 8), valid=True, name='UNIVERSIDADE DO MINHO', address='LG DO PACO\nBRAGA\n4700-320 BRAGA')
 
 .. end-getting-started
 

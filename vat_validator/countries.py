@@ -761,8 +761,7 @@ def validate_vat_ro(vat: str) -> bool:
         weights = [7, 5, 3, 2, 1, 7, 5, 3, 2][index:]
         check_digit = (
             10
-            * sum(weight * int(ch) for weight, ch in zip(weights, code))
-            % 11
+            * sum(weight * int(ch) for weight, ch in zip(weights, code)) % 11
         )
         return 0 if check_digit == 10 else check_digit
 

@@ -1,5 +1,7 @@
 from typing import List
-from .countries import EU_RULES
+import re
+
+from .countries import EU_COUNTRY_CODES, EU_RULES
 
 
 def validate_vat(country_code: str, vat: str) -> bool:
@@ -27,3 +29,21 @@ def countries_where_vat_is_valid(vat: str) -> List[str]:
     :return: list of country codes where the given VAT is valid.
     """
     return [country for country, rule in EU_RULES.items() if rule(vat)]
+
+
+def sanitize_vat(vat: str) -> str:
+    """Sanitizes a given VAT code, removing the country prefix, whitespace and
+    other non alphanumeric characters.
+
+    :param vat: VAT code to sanitize.
+    :return: sanitized VAT code.
+
+    **Example**
+
+    >>> sanitize_vat('PT 502.011.378')
+    '502011378'
+    """
+    prefixes = "|".join(
+        r"(^{})".format(country) for country in EU_COUNTRY_CODES
+    )
+    return re.sub(r"{}|\s*|\W*".format(prefixes), "", vat, flags=re.I)
