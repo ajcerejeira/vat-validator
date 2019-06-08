@@ -24,6 +24,9 @@ Pythonic VAT validation library 🌍💳✅
     :target: https://github.com/ajcerejeira/vat-validator/blob/master/LICENSE
     :alt: License: MIT
 
+.. image:: https://img.shields.io/pypi/v/vat-validator.svg
+    :target: https://pypi.org/project/vat-validator/
+    :alt: PyPI
 
 Features
 ========
