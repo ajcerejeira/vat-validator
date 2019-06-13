@@ -30,10 +30,10 @@ code, spaces, punctuation, *etc...*)
    This wikipedia page contains a great overview of the different formats:
    https://en.wikipedia.org/wiki/VAT_identification_number
 """
-from functools import reduce
-from math import floor, ceil
-from typing import Callable, Dict, List, Optional
 import re
+from functools import reduce
+from math import ceil, floor
+from typing import Callable, Dict, List, Optional
 
 
 def validate_vat_at(vat: str) -> bool:

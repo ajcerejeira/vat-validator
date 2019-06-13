@@ -31,7 +31,6 @@ from zeep.transports import Transport
 from .countries import EU_COUNTRY_CODES
 from .utils import sanitize_vat
 
-
 WSDL_URL = "http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl"
 
 

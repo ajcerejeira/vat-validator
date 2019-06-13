@@ -1,5 +1,5 @@
-from typing import List
 import re
+from typing import List
 
 from .countries import EU_COUNTRY_CODES, EU_RULES
 

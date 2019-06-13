@@ -1,13 +1,10 @@
-from pathlib import Path
 import unittest
+from pathlib import Path
 
-from vat_validator.countries import validate_vat_at
-from vat_validator.countries import validate_vat_be, validate_vat_bg
-from vat_validator.countries import validate_vat_cy
-from vat_validator.countries import validate_vat_dk
-from vat_validator.countries import validate_vat_fi
-from vat_validator.countries import validate_vat_pt
-from vat_validator.countries import validate_vat_ro
+from vat_validator.countries import (validate_vat_at, validate_vat_be,
+                                     validate_vat_bg, validate_vat_cy,
+                                     validate_vat_dk, validate_vat_fi,
+                                     validate_vat_pt, validate_vat_ro)
 
 
 class CountriesTestCase(unittest.TestCase):
