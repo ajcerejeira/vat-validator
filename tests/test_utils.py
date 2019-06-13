@@ -24,7 +24,7 @@ class ValidateVATTestCase(unittest.TestCase):
             self.assertEqual(
                 validate_vat(country_code, vat),
                 is_valid,
-                f"Test for VAT: ({country_code}, {vat}) failed",
+                "Test for VAT: ({}, {}) failed".format(country_code, vat),
             )
 
 

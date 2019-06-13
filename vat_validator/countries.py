@@ -33,7 +33,7 @@ code, spaces, punctuation, *etc...*)
 import re
 from functools import reduce
 from math import ceil, floor
-from typing import Callable, Dict, List, Optional
+from typing import Optional
 
 
 def validate_vat_at(vat: str) -> bool:
