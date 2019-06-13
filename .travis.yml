@@ -1,20 +1,16 @@
 dist: xenial
 language: python
-python:
-  - "3.6"
-  - "3.7"
+matrix:
+  include:
+    - python: "3.6"
+      env: TOXENV=py36
+    - python: "3.7"
+      env: TOXENV=py37
 install:
-  - pip install -r requirements.txt
-  - pip install flake8 mypy black
-  - pip install coveralls
+  - pip install tox coveralls
 script:
-  # Check code style
-  - black -l 79 --check vat_validator/ tests/
-  # Run linters
-  - mypy -m vat_validator
-  - flake8 vat_validator tests
-  # Run tests
-  - python setup.py test
+  - tox
+  # Run test coverage
   - coverage run --source=vat_validator setup.py test
   - coveralls
 deploy:
