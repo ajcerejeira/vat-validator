@@ -832,7 +832,7 @@ def validate_vat_sk(vat: str) -> bool:
 
 
 #: Maps a country code to the respective country VAT rule
-EU_RULES: Dict[str, Callable[[str], bool]] = {
+EU_RULES = {
     "AT": validate_vat_at,
     "BE": validate_vat_be,
     "BG": validate_vat_bg,
@@ -864,4 +864,4 @@ EU_RULES: Dict[str, Callable[[str], bool]] = {
 }
 
 #: List of european union country codes
-EU_COUNTRY_CODES: List[str] = list(EU_RULES.keys())
+EU_COUNTRY_CODES = list(EU_RULES.keys())
