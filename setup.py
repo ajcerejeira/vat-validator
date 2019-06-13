@@ -26,8 +26,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
         "Topic :: Office/Business :: Financial",
         "Topic :: Security :: Cryptography",
-	"Topic :: Utilities",
-	"Typing :: Typed",
+        "Topic :: Utilities",
+        "Typing :: Typed",
     ],
     install_requires=["zeep"],
 )

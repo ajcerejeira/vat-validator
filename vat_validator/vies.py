@@ -21,7 +21,6 @@ CheckVATResult(country_code='PT',
    The functions hereby described operate on this WSDL url:
    http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl
 """
-from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
@@ -36,7 +35,6 @@ from .utils import sanitize_vat
 WSDL_URL = "http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl"
 
 
-@dataclass(frozen=True)
 class CheckVATResult:
     """Represents the result obtained by running the function
     :func:`check_vat`.
@@ -49,12 +47,44 @@ class CheckVATResult:
     :param address: optional address of the entity associated with this VAT.
     """
 
-    country_code: str
-    vat: str
-    request_date: date
-    valid: bool
-    name: Optional[str]
-    address: Optional[str]
+    def __init__(
+        self,
+        country_code: str,
+        vat: str,
+        request_date: date,
+        valid: bool,
+        name: Optional[str],
+        address: Optional[str],
+    ):
+        self.country_code = country_code
+        self.vat = vat
+        self.request_date = request_date
+        self.valid = valid
+        self.name = name
+        self.address = address
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, CheckVATResult):
+            return False
+        return (
+            self.country_code == other.country_code
+            and self.vat == other.vat
+            and self.request_date == other.request_date
+            and self.valid == other.valid
+            and self.name == other.name
+            and self.address == other.address
+        )
+
+    def __str__(self) -> str:
+        return "CheckVATResult(country_code='{}', vat='{}', request_date={}, "
+        "valid={}, name={}, address={})".format(
+            self.country_code,
+            self.vat,
+            self.request_date,
+            self.valid,
+            self.name,
+            self.address,
+        )
 
 
 def check_vat(country_code: str, vat: str) -> CheckVATResult:
