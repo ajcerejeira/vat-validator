@@ -74,11 +74,30 @@ True
 >>> countries_where_vat_is_valid('502 011 378')
 ['PT']
 
+
+To validate a VAT number with ``VIES`` webservice:
+
 >>> from vat_validator.vies import check_vat
 >>> check_vat('PT', '502 011 378')
 CheckVATResult(country_code='PT', vat='502011378', request_date=datetime.date(2019, 6, 8), valid=True, name='UNIVERSIDADE DO MINHO', address='LG DO PACO\nBRAGA\n4700-320 BRAGA')
 
 .. end-getting-started
+
+
+=======
+Roadmap
+=======
+
+These are the goals before the `1.0.0` release:
+
+- [ ] Have a comprehensive test suite with valid and invalid VAT codes
+      for each country.
+- [ ] Compare the validity of each VAT code used in tests with ``TIN``
+      webservice.
+- [ ] Remove ``zeep`` dependency, by using standard library ``urllib`` to make
+      SOAP requests to VIES webservice, making this a module without any
+      dependencies.
+- [ ] Add support for ``async`` requests to VIES webservice.
 
 
 ============
