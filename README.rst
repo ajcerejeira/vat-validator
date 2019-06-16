@@ -90,14 +90,14 @@ Roadmap
 
 These are the goals before the `1.0.0` release:
 
-- [ ] Have a comprehensive test suite with valid and invalid VAT codes
-      for each country.
-- [ ] Compare the validity of each VAT code used in tests with ``TIN``
-      webservice.
-- [ ] Remove ``zeep`` dependency, by using standard library ``urllib`` to make
-      SOAP requests to VIES webservice, making this a module without any
-      dependencies.
-- [ ] Add support for ``async`` requests to VIES webservice.
+- Have a comprehensive test suite with valid and invalid VAT codes
+  for each country.
+- Compare the validity of each VAT code used in tests with ``TIN``
+  webservice.
+- Remove ``zeep`` dependency, by using standard library ``urllib`` to make
+  SOAP requests to VIES webservice, making this a module without any
+  dependencies.
+- Add support for ``async`` requests to VIES webservice.
 
 
 ============
