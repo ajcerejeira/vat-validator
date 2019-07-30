@@ -48,8 +48,8 @@ Getting started
 
 .. begin-getting-started
 
-Instalation
-===========
+Installation
+============
 
 ``vat-validator`` is distributed as standard pip library, and can be installed
 by running:
