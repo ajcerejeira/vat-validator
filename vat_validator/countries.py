@@ -33,7 +33,7 @@ code, spaces, punctuation, *etc...*)
 import re
 from functools import reduce
 from math import ceil, floor
-from typing import Optional
+from typing import Callable, Dict, List, Optional
 
 
 def validate_vat_at(vat: str) -> bool:
@@ -832,7 +832,7 @@ def validate_vat_sk(vat: str) -> bool:
 
 
 #: Maps a country code to the respective country VAT rule
-EU_RULES = {
+EU_RULES: Dict[str, Callable[[str], bool]] = {
     "AT": validate_vat_at,
     "BE": validate_vat_be,
     "BG": validate_vat_bg,
@@ -864,4 +864,4 @@ EU_RULES = {
 }
 
 #: List of european union country codes
-EU_COUNTRY_CODES = list(EU_RULES.keys())
+EU_COUNTRY_CODES: List[str] = list(EU_RULES.keys())
