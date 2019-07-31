@@ -29,5 +29,5 @@ setuptools.setup(
         "Topic :: Utilities",
         "Typing :: Typed",
     ],
-    install_requires=["typing;python_version<'3.5'", "zeep"],
+    install_requires=["typing;python_version<'3.5'"],
 )

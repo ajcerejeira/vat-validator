@@ -1,4 +1,3 @@
 black==19.3b0
 flake8==3.7.7
 mypy==0.701
-zeep==3.4.0

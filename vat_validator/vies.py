@@ -21,17 +21,13 @@ CheckVATResult(country_code='PT',
    The functions hereby described operate on this WSDL url:
    http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl
 """
-from datetime import date
+import xml.etree.ElementTree as ET
+from urllib import request
+from datetime import date, datetime
 from typing import Optional
-
-from zeep import Client
-from zeep.cache import InMemoryCache
-from zeep.transports import Transport
 
 from .countries import EU_COUNTRY_CODES
 from .utils import sanitize_vat
-
-WSDL_URL = "http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl"
 
 
 class CheckVATResult:
@@ -50,7 +46,7 @@ class CheckVATResult:
         self,
         country_code: str,
         vat: str,
-        request_date: date,
+        request_date: Optional[date],
         valid: bool,
         name: Optional[str],
         address: Optional[str],
@@ -74,15 +70,17 @@ class CheckVATResult:
             and self.address == other.address
         )
 
-    def __str__(self) -> str:
-        return "CheckVATResult(country_code='{}', vat='{}', request_date={}, "
-        "valid={}, name={}, address={})".format(
-            self.country_code,
-            self.vat,
-            self.request_date,
-            self.valid,
-            self.name,
-            self.address,
+    def __repr__(self) -> str:
+        return (
+            "CheckVATResult(country_code='{}', vat='{}', request_date={}, "
+            "valid={}, name='{}', address='{}')".format(
+                self.country_code,
+                self.vat,
+                self.request_date,
+                self.valid,
+                self.name,
+                self.address,
+            )
         )
 
 
@@ -95,19 +93,46 @@ def check_vat(country_code: str, vat: str) -> CheckVATResult:
     :return: instance of :class:`CheckVATResult`.
     :raises ValueError: when the country code is invalid or the VAT is empty.
     """
-    sanitized_vat = sanitize_vat(vat)
     if country_code not in EU_COUNTRY_CODES:
-        raise ValueError("Invalid country code")
+        raise ValueError("Invalid country code: '{}'".format(country_code))
+    sanitized_vat = sanitize_vat(vat)
     if not sanitized_vat:
         raise ValueError("Empty VAT number")
-    transport = Transport(cache=InMemoryCache())
-    client = Client(WSDL_URL, transport=transport)
-    result = client.service.checkVat(country_code, sanitized_vat)
+
+    # Prepare the SOAP request
+    envelope = ET.Element(
+        "soapenv:Envelope",
+        attrib={
+            "xmlns:hs": "urn:ec.europa.eu:taxud:vies:services:checkVat:types",
+            "xmlns:soapenv": "http://schemas.xmlsoap.org/soap/envelope/",
+        },
+    )
+    body = ET.SubElement(envelope, "soapenv:Body")
+    action = ET.SubElement(body, "hs:checkVat")
+    ET.SubElement(action, "hs:countryCode").text = country_code
+    ET.SubElement(action, "hs:vatNumber").text = sanitized_vat
+    payload = ET.tostring(envelope, encoding="utf-8")
+
+    # Send the SOAP request to VIES Webservice
+    url = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService"
+    req = request.Request(url, data=payload)
+    res = request.urlopen(req)
+
+    # Parse the result
+    res_envelope = ET.fromstring(res.read())
+    namespace = "urn:ec.europa.eu:taxud:vies:services:checkVat:types"
+    request_date = res_envelope.find(".//{{{}}}requestDate".format(namespace))
+    valid = res_envelope.find(".//{{{}}}valid".format(namespace))
+    name = res_envelope.find(".//{{{}}}name".format(namespace))
+    address = res_envelope.find(".//{{{}}}address".format(namespace))
+
     return CheckVATResult(
-        country_code=result["countryCode"],
-        vat=result["vatNumber"],
-        request_date=result["requestDate"],
-        valid=result["valid"],
-        name=result["name"] if result["valid"] else None,
-        address=result["address"] if result["valid"] else None,
+        country_code=country_code,
+        vat=sanitized_vat,
+        request_date=datetime.strptime(request_date.text, "%Y-%m-%d%z")
+        if request_date is not None and request_date.text is not None
+        else None,
+        valid=valid is not None and valid.text == "true",
+        name=name.text if name is not None else None,
+        address=address.text if address is not None else None,
     )
