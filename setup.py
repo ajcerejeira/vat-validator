@@ -13,7 +13,7 @@ setuptools.setup(
     description="VAT validation library",
     long_description=long_description,
     long_description_content_type="text/x-rst",
-    url="https://github.com/ajcerejeira/vatval",
+    url="https://github.com/ajcerejeira/vat-validator",
     license="MIT License",
     packages=setuptools.find_packages(),
     test_suite="tests",
