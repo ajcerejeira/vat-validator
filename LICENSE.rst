@@ -1,3 +1,9 @@
+=====================
+The MIT License (MIT)
+=====================
+
+.. begin-license
+
 Copyright (c) 2019 Afonso Silva
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
