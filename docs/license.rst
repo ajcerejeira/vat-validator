@@ -1,1 +1,5 @@
-.. include:: ../LICENSE.rst
+===============
+The MIT License
+===============
+
+.. include:: ../LICENSE.txt
