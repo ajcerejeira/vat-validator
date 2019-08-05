@@ -104,15 +104,13 @@ These are the goals before the `1.0.0` release:
 Contributing
 ============
 
-Pull requests are welcome! Please check the CONTRIBUTING_ file for contribution guidelines.
-
-.. _CONTRIBUTING: CONTRIBUTING.rst
-
+Pull requests are welcome! Please check the :doc:`CONTRIBUTING <contributing>`
+file for contribution guidelines.
 
 =======
 License
 =======
 
-This software is distributed under MIT license. See the LICENSE_ file for details.
+This software is distributed under MIT license. See the :doc:`LICENSE <license>`
+file for details.
 
-.. _LICENSE: LICENSE
