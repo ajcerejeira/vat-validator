@@ -68,11 +68,11 @@ To install the latest development version directly from git:
 Usage
 =====
 
->>> from vat_validator import validate_vat, countries_where_vat_is_valid
->>> validate_vat('PT', 'PT 502 011 378')
+>>> from vat_validator import inspect_vat, sanitize_vat, vat_is_valid
+>>> vat_is_valid('PT', 'PT 502 011 378')
 True
->>> countries_where_vat_is_valid('502 011 378')
-['PT']
+>>> sanitize_vat('PT', 'PT 502 011 378')
+'502011378'
 
 
 To validate a VAT number with ``VIES`` webservice:
@@ -113,6 +113,6 @@ Pull requests are welcome! Please check the CONTRIBUTING_ file for contribution 
 License
 =======
 
-This software is distrubuted under MIT license. See the LICENSE_ file for details.
+This software is distributed under MIT license. See the LICENSE_ file for details.
 
 .. _LICENSE: LICENSE

@@ -5,10 +5,11 @@ from the entity with that VAT.
 
 **Usage**:
 
+
 >>> check_vat('PT', '502011378')
 CheckVATResult(country_code='PT',
                vat='502011378',
-               request_date=datetime.date(2019, 6, 6),
+               request_date=2019-08-01 00:00:00+02:00,
                valid=True,
                name='UNIVERSIDADE DO MINHO',
                address='LG DO PACO\\nBRAGA\\n4700-320 BRAGA')
@@ -22,12 +23,12 @@ CheckVATResult(country_code='PT',
    http://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl
 """
 import xml.etree.ElementTree as ET
-from urllib import request
 from datetime import date, datetime
 from typing import Optional
+from urllib import request
 
-from .countries import EU_COUNTRY_CODES
-from .utils import sanitize_vat
+from vat_validator.countries import EU_COUNTRY_CODES
+from vat_validator.sanitizers import sanitize_vat
 
 
 class CheckVATResult:
@@ -71,17 +72,11 @@ class CheckVATResult:
         )
 
     def __repr__(self) -> str:
-        return (
-            "CheckVATResult(country_code='{}', vat='{}', request_date={}, "
-            "valid={}, name='{}', address='{}')".format(
-                self.country_code,
-                self.vat,
-                self.request_date,
-                self.valid,
-                self.name,
-                self.address,
-            )
+        fields = ", ".join(
+            "{}={}".format(attr, repr(value))
+            for attr, value in vars(self).items()
         )
+        return "CheckVATResult({})".format(fields)
 
 
 def check_vat(country_code: str, vat: str) -> CheckVATResult:
@@ -95,9 +90,7 @@ def check_vat(country_code: str, vat: str) -> CheckVATResult:
     """
     if country_code not in EU_COUNTRY_CODES:
         raise ValueError("Invalid country code: '{}'".format(country_code))
-    sanitized_vat = sanitize_vat(vat)
-    if not sanitized_vat:
-        raise ValueError("Empty VAT number")
+    sanitized_vat = sanitize_vat(country_code, vat)
 
     # Prepare the SOAP request
     envelope = ET.Element(

@@ -27,10 +27,15 @@ Table of contents
 
 
 .. toctree::
-   :maxdepth: 2
    :caption: Contributing
 
    contributing
+
+
+.. toctree::
+   :caption: License
+
+   license
 
 
 Indices and tables

@@ -1,4 +1,4 @@
-.. _contributing-guide:
+.. _contributing:
 
 .. include:: ../CONTRIBUTING.rst
    :start-after: begin-contributing
