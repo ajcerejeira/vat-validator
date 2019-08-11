@@ -33,7 +33,7 @@ Features
 
 - Offline VAT code validation using country specific regular expressions and
   checksum algorithms;
-- Online validation for European Union VAT codes using VIES_ webservice;
+- Online validation for European Union VAT codes using VIES_ web service;
 - VAT code sanitization;
 - Fully annotated with type hints, for a better IDE and ``mypy`` development
   experience;
@@ -75,7 +75,7 @@ True
 '502011378'
 
 
-To validate a VAT number with ``VIES`` webservice:
+To validate a VAT number with ``VIES`` web service:
 
 >>> from vat_validator.vies import check_vat
 >>> check_vat('PT', '502 011 378')
@@ -93,11 +93,11 @@ These are the goals before the `1.0.0` release:
 - ❌ Have a comprehensive test suite with valid and invalid VAT codes
   for each country.
 - ❌ Compare the validity of each VAT code used in tests with ``TIN``
-  webservice.
+  web service.
 - ✅ Remove ``zeep`` dependency, by using standard library ``urllib`` to make
-  SOAP requests to VIES webservice, making this a module without any
+  SOAP requests to VIES web service, making this a module without any
   dependencies.
-- ❌ Add support for ``async`` requests to VIES webservice.
+- ❌ Add support for ``async`` requests to VIES web service.
 
 
 ============

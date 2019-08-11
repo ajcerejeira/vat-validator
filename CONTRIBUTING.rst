@@ -7,7 +7,7 @@ Contributing
 Setting up
 ==========
 
-It is recomended to set up a virtual environment to develop on this project.
+It is recommended to set up a virtual environment to develop on this project.
 To create one and install the required dependencies, run:
 
 ::
@@ -67,4 +67,4 @@ This commands must return valid values on each commit:
 .. _black: https://github.com/python/black
 
 
-It is recomended to set up your text editor/IDE to run this tools on save.
+It is recommended to set up your text editor/IDE to run this tools on save.

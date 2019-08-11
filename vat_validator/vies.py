@@ -1,6 +1,6 @@
 """
 This module allows interaction with VIES (VAT Information Exchange Service)
-webservice. It can be used to validate VAT codes and fetch other information
+web service. It can be used to validate VAT codes and fetch other information
 from the entity with that VAT.
 
 **Usage**:

@@ -17,7 +17,7 @@ True
 >>> vat_is_valid_pt('980405319')
 False
 
-Each function is responsible to sanitize the input (remove preciding country
+Each function is responsible to sanitize the input (remove preceding country
 code, spaces, punctuation, *etc...*)
 
 
